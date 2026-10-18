@@ -114,7 +114,7 @@ function EntriesTab() {
 
   async function setEntryStatus(id: string, s: "freigegeben" | "abgelehnt" | "offen") {
     const { error } = await supabase.from("time_entries").update({ status: s }).eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     qc.invalidateQueries({ queryKey: ["entries"] });
   }
 
@@ -122,7 +122,7 @@ function EntriesTab() {
     const ids = filtered.filter((e) => e.status === "offen" && e.clock_out).map((e) => e.id);
     if (!ids.length) return;
     const { error } = await supabase.from("time_entries").update({ status: "freigegeben" }).in("id", ids);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success(`${ids.length} Einträge freigegeben`);
     qc.invalidateQueries({ queryKey: ["entries"] });
   }
@@ -280,7 +280,7 @@ function EmployeesTab() {
     const n = Number(v.replace(",", "."));
     if (Number.isNaN(n)) return;
     const { error } = await supabase.from("profiles").update({ hourly_wage: n }).eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Stundenlohn gespeichert");
     qc.invalidateQueries({ queryKey: ["profiles"] });
   }
@@ -338,7 +338,7 @@ function SitesTab() {
   async function add(e: React.FormEvent) {
     e.preventDefault();
     const { error } = await supabase.from("sites").insert({ name: name.trim(), address: address.trim() || null });
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     setName("");
     setAddress("");
     toast.success("Baustelle angelegt");
@@ -347,7 +347,7 @@ function SitesTab() {
 
   async function toggle(id: string, active: boolean) {
     const { error } = await supabase.from("sites").update({ active }).eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     qc.invalidateQueries({ queryKey: ["sites"] });
   }
 

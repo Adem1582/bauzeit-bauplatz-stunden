@@ -72,11 +72,11 @@ function ZeitPage() {
 
   async function clockIn() {
     if (!me) return;
-    if (!siteId) return toast.error("Bitte zuerst eine Baustelle auswählen.");
+    if (!siteId) { toast.error("Bitte zuerst eine Baustelle auswählen."); return; }
     setBusy(true);
     const { error } = await supabase.from("time_entries").insert({ user_id: me.id, site_id: siteId, description: desc || null });
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Eingestempelt – gute Arbeit!");
     refresh();
   }
@@ -89,7 +89,7 @@ function ZeitPage() {
       .update({ clock_out: new Date().toISOString(), site_id: siteId || null, description: desc || null })
       .eq("id", open.id);
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Ausgestempelt. Feierabend!");
     refresh();
   }
@@ -97,7 +97,7 @@ function ZeitPage() {
   async function saveDetails() {
     if (!open) return;
     const { error } = await supabase.from("time_entries").update({ site_id: siteId || null, description: desc || null }).eq("id", open.id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Gespeichert");
     refresh();
   }
@@ -190,7 +190,7 @@ function ZeitPage() {
             {days.map(([k, list]) => (
               <div key={k} className="rounded-2xl bg-card p-4 shadow-sm">
                 <div className="mb-2 flex justify-between font-semibold">
-                  <span>{fmtDate(list[0].clock_in)}</span>
+                  <span>{fmtDate(list[0]!.clock_in)}</span>
                   <span>{fmtHours(sumHours(list, now))}</span>
                 </div>
                 {list.map((e) => (

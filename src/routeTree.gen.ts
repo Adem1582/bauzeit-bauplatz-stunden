@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedChefRouteImport } from './routes/_authenticated/chef'
 import { Route as AuthenticatedZeitRouteImport } from './routes/_authenticated/zeit'
 
 const IndexRoute = IndexRouteImport.update({
@@ -28,6 +29,11 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedChefRoute = AuthenticatedChefRouteImport.update({
+  id: '/chef',
+  path: '/chef',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedZeitRoute = AuthenticatedZeitRouteImport.update({
   id: '/zeit',
   path: '/zeit',
@@ -37,11 +43,13 @@ const AuthenticatedZeitRoute = AuthenticatedZeitRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/chef': typeof AuthenticatedChefRoute
   '/zeit': typeof AuthenticatedZeitRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/chef': typeof AuthenticatedChefRoute
   '/zeit': typeof AuthenticatedZeitRoute
 }
 export interface FileRoutesById {
@@ -49,14 +57,21 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/chef': typeof AuthenticatedChefRoute
   '/_authenticated/zeit': typeof AuthenticatedZeitRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/zeit'
+  fullPaths: '/' | '/auth' | '/chef' | '/zeit'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/zeit'
-  id: '__root__' | '/' | '/_authenticated' | '/auth' | '/_authenticated/zeit'
+  to: '/' | '/auth' | '/chef' | '/zeit'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/chef'
+    | '/_authenticated/zeit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -88,6 +103,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/chef': {
+      id: '/_authenticated/chef'
+      path: '/chef'
+      fullPath: '/chef'
+      preLoaderRoute: typeof AuthenticatedChefRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/zeit': {
       id: '/_authenticated/zeit'
       path: '/zeit'
@@ -99,10 +121,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedChefRoute: typeof AuthenticatedChefRoute
   AuthenticatedZeitRoute: typeof AuthenticatedZeitRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedChefRoute: AuthenticatedChefRoute,
   AuthenticatedZeitRoute: AuthenticatedZeitRoute,
 }
 

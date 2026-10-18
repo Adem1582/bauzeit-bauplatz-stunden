@@ -40,7 +40,7 @@ function AuthPage() {
     if (mode === "login") {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       setBusy(false);
-      if (error) return toast.error("Anmeldung fehlgeschlagen. E-Mail oder Passwort falsch.");
+      if (error) { toast.error("Anmeldung fehlgeschlagen. E-Mail oder Passwort falsch."); return; }
       navigate({ to: "/" });
     } else {
       const { data, error } = await supabase.auth.signUp({
@@ -49,7 +49,7 @@ function AuthPage() {
         options: { emailRedirectTo: window.location.origin, data: { full_name: name } },
       });
       setBusy(false);
-      if (error) return toast.error(error.message);
+      if (error) { toast.error(error.message); return; }
       if (data.session) navigate({ to: "/" });
       else toast.success("Bitte bestätige deine E-Mail-Adresse über den Link im Postfach.");
     }

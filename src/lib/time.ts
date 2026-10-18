@@ -41,7 +41,7 @@ export function startOfWeek(d: Date): Date {
 }
 
 export function monthRange(ym: string): { from: Date; to: Date } {
-  const [y, m] = ym.split("-").map(Number);
+  const [y = 2026, m = 1] = ym.split("-").map(Number);
   return { from: new Date(y, m - 1, 1), to: new Date(y, m, 1) };
 }
 
