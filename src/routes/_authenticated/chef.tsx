@@ -177,7 +177,7 @@ function FilterSelect({ label, value, onChange, options }: { label: string; valu
         <SelectTrigger className="h-11 w-full"><SelectValue /></SelectTrigger>
         <SelectContent>
           <SelectItem value="alle">Alle</SelectItem>
-          {options.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
+          {options.map(([v = "", l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
         </SelectContent>
       </Select>
     </div>
