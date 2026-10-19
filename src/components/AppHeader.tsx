@@ -26,12 +26,13 @@ export function AppHeader() {
           <div className="font-display text-xl font-bold uppercase leading-none">Bau-Stempeluhr</div>
           <div className="truncate text-xs opacity-80">{me?.name}</div>
         </div>
-        {me?.isAdmin && (
-          <nav className="flex gap-1 text-sm font-semibold">
-            <Link to="/zeit" className="rounded-lg px-3 py-2" activeProps={{ className: "bg-sidebar-accent" }}>Stempeln</Link>
+        <nav className="flex gap-1 text-sm font-semibold">
+          <Link to="/zeit" className="rounded-lg px-3 py-2" activeProps={{ className: "bg-sidebar-accent" }}>Stempeln</Link>
+          <Link to="/abwesenheit" className="rounded-lg px-3 py-2" activeProps={{ className: "bg-sidebar-accent" }}>Abwesenheit</Link>
+          {me?.isAdmin && (
             <Link to="/chef" className="rounded-lg px-3 py-2" activeProps={{ className: "bg-sidebar-accent" }}>Chef</Link>
-          </nav>
-        )}
+          )}
+        </nav>
         <button onClick={signOut} aria-label="Abmelden" className="rounded-lg p-2 hover:bg-sidebar-accent">
           <LogOut className="h-5 w-5" />
         </button>
