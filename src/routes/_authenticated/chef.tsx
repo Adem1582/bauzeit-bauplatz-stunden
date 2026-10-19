@@ -467,14 +467,35 @@ function SitesTab() {
   const { data: sites = [] } = useSites();
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
+  const [lat, setLat] = useState("");
+  const [lng, setLng] = useState("");
+
+  const parseCoord = (v: string) => {
+    const n = Number(v.replace(",", "."));
+    return v.trim() && !Number.isNaN(n) ? n : null;
+  };
 
   async function add(e: React.FormEvent) {
     e.preventDefault();
-    const { error } = await supabase.from("sites").insert({ name: name.trim(), address: address.trim() || null });
+    const { error } = await supabase.from("sites").insert({
+      name: name.trim(),
+      address: address.trim() || null,
+      lat: parseCoord(lat),
+      lng: parseCoord(lng),
+    });
     if (error) { toast.error(error.message); return; }
     setName("");
     setAddress("");
+    setLat("");
+    setLng("");
     toast.success("Baustelle angelegt");
+    qc.invalidateQueries({ queryKey: ["sites"] });
+  }
+
+  async function saveCoords(id: string, latV: string, lngV: string) {
+    const { error } = await supabase.from("sites").update({ lat: parseCoord(latV), lng: parseCoord(lngV) }).eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Koordinaten gespeichert");
     qc.invalidateQueries({ queryKey: ["sites"] });
   }
 
