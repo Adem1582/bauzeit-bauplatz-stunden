@@ -56,6 +56,28 @@ export function fmtDate(s: string) {
   return new Date(s).toLocaleDateString("de-DE", { weekday: "short", day: "2-digit", month: "2-digit" });
 }
 
+export type AbsenceLike = { start_date: string; end_date: string; type: string; status?: string };
+
+/** Anzahl Tage einer Abwesenheit (beide Enden inklusive). */
+export function absenceDays(a: AbsenceLike): number {
+  const s = new Date(a.start_date + "T00:00:00").getTime();
+  const e = new Date(a.end_date + "T00:00:00").getTime();
+  return Math.max(0, Math.round((e - s) / 86_400_000) + 1);
+}
+
+/** Genehmigte Urlaubs-/Kranktage, die in den Monat [from, to) fallen. */
+export function approvedAbsenceDaysInMonth(absences: AbsenceLike[], from: Date, to: Date): { urlaub: number; krank: number } {
+  let urlaub = 0, krank = 0;
+  for (const a of absences) {
+    if (a.status !== "genehmigt" || a.type === "sonstiges") continue;
+    const s = new Date(a.start_date + "T00:00:00"), e = new Date(a.end_date + "T00:00:00");
+    for (let d = new Date(Math.max(s.getTime(), from.getTime())); d < to && d <= e; d.setDate(d.getDate() + 1)) {
+      if (a.type === "urlaub") urlaub++; else krank++;
+    }
+  }
+  return { urlaub, krank };
+}
+
 export function toCsv(rows: (string | number)[][]): string {
   return rows
     .map((r) =>

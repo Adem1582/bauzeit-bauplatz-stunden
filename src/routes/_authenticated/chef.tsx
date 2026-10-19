@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { createEmployee } from "@/lib/admin.functions";
-import { calcWage, currentYm, downloadCsv, eur, fmtDate, fmtHours, fmtTime, entryHours, monthRange, toCsv } from "@/lib/time";
+import { absenceDays, approvedAbsenceDaysInMonth, calcWage, currentYm, downloadCsv, eur, fmtDate, fmtHours, fmtTime, entryHours, monthRange, toCsv } from "@/lib/time";
 
 export const Route = createFileRoute("/_authenticated/chef")({
   head: () => ({
@@ -51,13 +51,15 @@ function ChefPage() {
       <main className="mx-auto max-w-5xl px-4 pt-5">
         <h1 className="mb-4 text-3xl font-extrabold uppercase">Chef-Bereich</h1>
         <Tabs defaultValue="eintraege">
-          <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:grid-cols-4">
+          <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:grid-cols-5">
             <TabsTrigger value="eintraege" className="py-2.5">Einträge</TabsTrigger>
+            <TabsTrigger value="abwesenheiten" className="py-2.5">Abwesenheiten</TabsTrigger>
             <TabsTrigger value="monat" className="py-2.5">Monat & Lohn</TabsTrigger>
             <TabsTrigger value="mitarbeiter" className="py-2.5">Mitarbeiter</TabsTrigger>
             <TabsTrigger value="baustellen" className="py-2.5">Baustellen</TabsTrigger>
           </TabsList>
           <TabsContent value="eintraege"><EntriesTab /></TabsContent>
+          <TabsContent value="abwesenheiten"><AbsencesTab /></TabsContent>
           <TabsContent value="monat"><MonthTab /></TabsContent>
           <TabsContent value="mitarbeiter"><EmployeesTab /></TabsContent>
           <TabsContent value="baustellen"><SitesTab /></TabsContent>
@@ -184,10 +186,93 @@ function FilterSelect({ label, value, onChange, options }: { label: string; valu
   );
 }
 
+const absenceTypeLabel: Record<string, string> = { urlaub: "Urlaub", krank: "Krankmeldung", sonstiges: "Sonstiges" };
+const fmtD = (s: string) => new Date(s + "T00:00:00").toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
+
+function useMonthAbsences(ym: string) {
+  return useQuery({
+    queryKey: ["absences", ym],
+    queryFn: async () => {
+      const { from, to } = monthRange(ym);
+      const iso = (d: Date) => d.toISOString().slice(0, 10);
+      return (
+        (
+          await supabase
+            .from("absences")
+            .select("*, profiles(full_name)")
+            .lte("start_date", iso(to))
+            .gte("end_date", iso(from))
+            .order("start_date", { ascending: false })
+        ).data ?? []
+      );
+    },
+  });
+}
+
+function AbsencesTab() {
+  const qc = useQueryClient();
+  const [ym, setYm] = useState(currentYm());
+  const [emp, setEmp] = useState("alle");
+  const [type, setType] = useState("alle");
+  const [status, setStatus] = useState("alle");
+  const { data: profiles = [] } = useProfiles();
+  const { data: absences = [] } = useMonthAbsences(ym);
+
+  const filtered = absences.filter(
+    (a) =>
+      (emp === "alle" || a.user_id === emp) &&
+      (type === "alle" || a.type === type) &&
+      (status === "alle" || a.status === status),
+  );
+
+  async function setAbsenceStatus(id: string, s: "genehmigt" | "abgelehnt") {
+    const { error } = await supabase.from("absences").update({ status: s }).eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    qc.invalidateQueries({ queryKey: ["absences"] });
+  }
+
+  return (
+    <div className="mt-4 space-y-4">
+      <div className="grid grid-cols-2 gap-3 rounded-2xl bg-card p-4 shadow-sm md:grid-cols-4">
+        <MonthInput value={ym} onChange={setYm} />
+        <FilterSelect label="Mitarbeiter" value={emp} onChange={setEmp} options={profiles.map((p) => [p.id, p.full_name])} />
+        <FilterSelect label="Typ" value={type} onChange={setType} options={[["urlaub", "Urlaub"], ["krank", "Krankmeldung"], ["sonstiges", "Sonstiges"]]} />
+        <FilterSelect label="Status" value={status} onChange={setStatus} options={[["offen", "Offen"], ["genehmigt", "Genehmigt"], ["abgelehnt", "Abgelehnt"]]} />
+      </div>
+      <span className="text-sm text-muted-foreground">{filtered.length} Anträge</span>
+      <div className="space-y-2">
+        {filtered.map((a) => (
+          <div key={a.id} className="flex flex-col gap-3 rounded-2xl bg-card p-4 shadow-sm sm:flex-row sm:items-center">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 font-semibold">
+                {a.profiles?.full_name} <StatusBadge status={a.status} />
+              </div>
+              <div className="text-sm">
+                {absenceTypeLabel[a.type]} · {fmtD(a.start_date)} – {fmtD(a.end_date)} · <b>{absenceDays(a)} {absenceDays(a) === 1 ? "Tag" : "Tage"}</b>
+              </div>
+              {a.note && <div className="text-sm text-muted-foreground">{a.note}</div>}
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={() => setAbsenceStatus(a.id, "genehmigt")} disabled={a.status === "genehmigt"} className="h-12 flex-1 bg-success text-success-foreground hover:bg-success/90 sm:flex-none">
+                <Check /> Genehmigen
+              </Button>
+              <Button onClick={() => setAbsenceStatus(a.id, "abgelehnt")} disabled={a.status === "abgelehnt"} variant="destructive" className="h-12 flex-1 sm:flex-none">
+                <X /> Ablehnen
+              </Button>
+            </div>
+          </div>
+        ))}
+        {filtered.length === 0 && <p className="py-8 text-center text-muted-foreground">Keine Anträge gefunden.</p>}
+      </div>
+    </div>
+  );
+}
+
 function MonthTab() {
   const [ym, setYm] = useState(currentYm());
   const { data: profiles = [] } = useProfiles();
   const { data: entries = [] } = useMonthEntries(ym);
+  const { data: absences = [] } = useMonthAbsences(ym);
 
   const rows = useMemo(
     () =>
@@ -195,17 +280,19 @@ function MonthTab() {
         const mine = entries.filter((e) => e.user_id === p.id);
         const { hours, wage } = calcWage(mine, Number(p.hourly_wage));
         const approved = calcWage(mine.filter((e) => e.status === "freigegeben"), Number(p.hourly_wage)).hours;
-        return { p, hours, approved, open: mine.filter((e) => e.status === "offen").length, wage };
+        const { from, to } = monthRange(ym);
+        const ab = approvedAbsenceDaysInMonth(absences.filter((a) => a.user_id === p.id), from, to);
+        return { p, hours, approved, open: mine.filter((e) => e.status === "offen").length, wage, urlaub: ab.urlaub, krank: ab.krank };
       }),
-    [profiles, entries],
+    [profiles, entries, absences, ym],
   );
   const total = rows.reduce((s, r) => s + r.wage, 0);
 
   function exportCsv() {
     const csv = toCsv([
-      ["Mitarbeiter", "E-Mail", "Monat", "Stunden gesamt", "davon freigegeben", "Stundenlohn (EUR)", "Lohn (EUR)"],
-      ...rows.map((r) => [r.p.full_name, r.p.email ?? "", ym, r.hours, r.approved, Number(r.p.hourly_wage), r.wage]),
-      ["Summe", "", ym, rows.reduce((s, r) => s + r.hours, 0), rows.reduce((s, r) => s + r.approved, 0), "", total],
+      ["Mitarbeiter", "E-Mail", "Monat", "Stunden gesamt", "davon freigegeben", "Urlaubstage", "Kranktage", "Stundenlohn (EUR)", "Lohn (EUR)"],
+      ...rows.map((r) => [r.p.full_name, r.p.email ?? "", ym, r.hours, r.approved, r.urlaub, r.krank, Number(r.p.hourly_wage), r.wage]),
+      ["Summe", "", ym, rows.reduce((s, r) => s + r.hours, 0), rows.reduce((s, r) => s + r.approved, 0), rows.reduce((s, r) => s + r.urlaub, 0), rows.reduce((s, r) => s + r.krank, 0), "", total],
     ]);
     downloadCsv(`lohn-${ym}.csv`, csv);
   }
@@ -227,6 +314,8 @@ function MonthTab() {
               <th className="p-3 text-right">Stunden</th>
               <th className="p-3 text-right">Freigegeben</th>
               <th className="p-3 text-right">Offen</th>
+              <th className="p-3 text-right">Urlaub</th>
+              <th className="p-3 text-right">Krank</th>
               <th className="p-3 text-right">€/h</th>
               <th className="p-3 text-right">Lohn</th>
             </tr>
@@ -238,6 +327,8 @@ function MonthTab() {
                 <td className="p-3 text-right">{fmtHours(r.hours)}</td>
                 <td className="p-3 text-right">{fmtHours(r.approved)}</td>
                 <td className="p-3 text-right">{r.open}</td>
+                <td className="p-3 text-right">{r.urlaub > 0 ? `${r.urlaub} T` : "—"}</td>
+                <td className="p-3 text-right">{r.krank > 0 ? `${r.krank} T` : "—"}</td>
                 <td className="p-3 text-right">{eur(Number(r.p.hourly_wage))}</td>
                 <td className="p-3 text-right font-bold">{eur(r.wage)}</td>
               </tr>
@@ -245,7 +336,7 @@ function MonthTab() {
           </tbody>
           <tfoot>
             <tr className="border-t-2 font-bold">
-              <td className="p-3" colSpan={5}>Summe</td>
+              <td className="p-3" colSpan={7}>Summe</td>
               <td className="p-3 text-right text-accent-foreground"><span className="rounded bg-accent px-2 py-1">{eur(total)}</span></td>
             </tr>
           </tfoot>

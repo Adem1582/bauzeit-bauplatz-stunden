@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedAbwesenheitRouteImport } from './routes/_authenticated/abwesenheit'
 import { Route as AuthenticatedChefRouteImport } from './routes/_authenticated/chef'
 import { Route as AuthenticatedZeitRouteImport } from './routes/_authenticated/zeit'
 
@@ -29,6 +30,12 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAbwesenheitRoute =
+  AuthenticatedAbwesenheitRouteImport.update({
+    id: '/abwesenheit',
+    path: '/abwesenheit',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedChefRoute = AuthenticatedChefRouteImport.update({
   id: '/chef',
   path: '/chef',
@@ -43,12 +50,14 @@ const AuthenticatedZeitRoute = AuthenticatedZeitRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/abwesenheit': typeof AuthenticatedAbwesenheitRoute
   '/chef': typeof AuthenticatedChefRoute
   '/zeit': typeof AuthenticatedZeitRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/abwesenheit': typeof AuthenticatedAbwesenheitRoute
   '/chef': typeof AuthenticatedChefRoute
   '/zeit': typeof AuthenticatedZeitRoute
 }
@@ -57,19 +66,21 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/abwesenheit': typeof AuthenticatedAbwesenheitRoute
   '/_authenticated/chef': typeof AuthenticatedChefRoute
   '/_authenticated/zeit': typeof AuthenticatedZeitRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/chef' | '/zeit'
+  fullPaths: '/' | '/auth' | '/abwesenheit' | '/chef' | '/zeit'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/chef' | '/zeit'
+  to: '/' | '/auth' | '/abwesenheit' | '/chef' | '/zeit'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/abwesenheit'
     | '/_authenticated/chef'
     | '/_authenticated/zeit'
   fileRoutesById: FileRoutesById
@@ -103,6 +114,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/abwesenheit': {
+      id: '/_authenticated/abwesenheit'
+      path: '/abwesenheit'
+      fullPath: '/abwesenheit'
+      preLoaderRoute: typeof AuthenticatedAbwesenheitRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/chef': {
       id: '/_authenticated/chef'
       path: '/chef'
@@ -121,11 +139,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAbwesenheitRoute: typeof AuthenticatedAbwesenheitRoute
   AuthenticatedChefRoute: typeof AuthenticatedChefRoute
   AuthenticatedZeitRoute: typeof AuthenticatedZeitRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAbwesenheitRoute: AuthenticatedAbwesenheitRoute,
   AuthenticatedChefRoute: AuthenticatedChefRoute,
   AuthenticatedZeitRoute: AuthenticatedZeitRoute,
 }

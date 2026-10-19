@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      absences: {
+        Row: {
+          created_at: string
+          end_date: string
+          id: string
+          note: string | null
+          start_date: string
+          status: Database["public"]["Enums"]["absence_status"]
+          type: Database["public"]["Enums"]["absence_type"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          id?: string
+          note?: string | null
+          start_date: string
+          status?: Database["public"]["Enums"]["absence_status"]
+          type: Database["public"]["Enums"]["absence_type"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          id?: string
+          note?: string | null
+          start_date?: string
+          status?: Database["public"]["Enums"]["absence_status"]
+          type?: Database["public"]["Enums"]["absence_type"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "absences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           active: boolean
@@ -146,6 +187,8 @@ export type Database = {
       }
     }
     Enums: {
+      absence_status: "offen" | "genehmigt" | "abgelehnt"
+      absence_type: "urlaub" | "krank" | "sonstiges"
       app_role: "admin" | "employee"
       entry_status: "offen" | "freigegeben" | "abgelehnt"
     }
@@ -275,6 +318,8 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      absence_status: ["offen", "genehmigt", "abgelehnt"],
+      absence_type: ["urlaub", "krank", "sonstiges"],
       app_role: ["admin", "employee"],
       entry_status: ["offen", "freigegeben", "abgelehnt"],
     },
