@@ -10,7 +10,31 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { entryHours, fmtDate, fmtHours, fmtTime, startOfWeek, sumHours } from "@/lib/time";
+import { entryHours, fmtDate, fmtHours, fmtTime, osmLink, startOfWeek, sumHours } from "@/lib/time";
+
+type Gps = { lat: number; lng: number } | null;
+
+/** Versucht den GPS-Standort zu ermitteln; blockiert das Stempeln nie. */
+function getPosition(): Promise<Gps> {
+  return new Promise((resolve) => {
+    if (!("geolocation" in navigator)) {
+      toast.info("Dieses Gerät unterstützt keinen Standort – Stempeln geht trotzdem.");
+      return resolve(null);
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      (err) => {
+        if (err.code === err.PERMISSION_DENIED) {
+          toast.warning("Standortzugriff deaktiviert. Bitte im Browser erlauben – Stempeln funktioniert auch ohne GPS.");
+        } else {
+          toast.info("Standort konnte nicht ermittelt werden – Stempeln geht trotzdem.");
+        }
+        resolve(null);
+      },
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 60_000 },
+    );
+  });
+}
 
 export const Route = createFileRoute("/_authenticated/zeit")({
   head: () => ({
@@ -74,7 +98,14 @@ function ZeitPage() {
     if (!me) return;
     if (!siteId) { toast.error("Bitte zuerst eine Baustelle auswählen."); return; }
     setBusy(true);
-    const { error } = await supabase.from("time_entries").insert({ user_id: me.id, site_id: siteId, description: desc || null });
+    const gps = await getPosition();
+    const { error } = await supabase.from("time_entries").insert({
+      user_id: me.id,
+      site_id: siteId,
+      description: desc || null,
+      clock_in_lat: gps?.lat ?? null,
+      clock_in_lng: gps?.lng ?? null,
+    });
     setBusy(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Eingestempelt – gute Arbeit!");
@@ -84,9 +115,16 @@ function ZeitPage() {
   async function clockOut() {
     if (!open) return;
     setBusy(true);
+    const gps = await getPosition();
     const { error } = await supabase
       .from("time_entries")
-      .update({ clock_out: new Date().toISOString(), site_id: siteId || null, description: desc || null })
+      .update({
+        clock_out: new Date().toISOString(),
+        site_id: siteId || null,
+        description: desc || null,
+        clock_out_lat: gps?.lat ?? null,
+        clock_out_lng: gps?.lng ?? null,
+      })
       .eq("id", open.id);
     setBusy(false);
     if (error) { toast.error(error.message); return; }
