@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { approvedAbsenceDaysInMonth, absenceDays, calcWage, entryHours } from "@/lib/time";
+import { approvedAbsenceDaysInMonth, absenceDays, calcWage, distanceMeters, entryHours } from "@/lib/time";
 
 describe("Lohnberechnung", () => {
   it("Stunden werden aus Ein-/Ausstempeln berechnet", () => {
@@ -38,5 +38,16 @@ describe("Abwesenheiten", () => {
     );
     expect(r.urlaub).toBe(2);
     expect(r.krank).toBe(2);
+  });
+});
+
+describe("GPS-Distanz", () => {
+  it("gleicher Punkt = 0 m", () => {
+    expect(distanceMeters(52.52, 13.405, 52.52, 13.405)).toBe(0);
+  });
+  it("bekannte Distanz Berlin–München ca. 504 km", () => {
+    const d = distanceMeters(52.52, 13.405, 48.137, 11.575);
+    expect(d).toBeGreaterThan(490_000);
+    expect(d).toBeLessThan(520_000);
   });
 });

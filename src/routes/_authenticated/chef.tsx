@@ -2,7 +2,7 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Check, Download, Plus, X } from "lucide-react";
+import { Check, Download, MapPin, Plus, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppHeader } from "@/components/AppHeader";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { createEmployee } from "@/lib/admin.functions";
-import { absenceDays, approvedAbsenceDaysInMonth, calcWage, currentYm, downloadCsv, eur, fmtDate, fmtHours, fmtTime, entryHours, monthRange, toCsv } from "@/lib/time";
+import { absenceDays, approvedAbsenceDaysInMonth, calcWage, currentYm, distanceMeters, downloadCsv, eur, fmtDate, fmtDistance, fmtHours, fmtTime, entryHours, monthRange, osmLink, toCsv } from "@/lib/time";
 
 export const Route = createFileRoute("/_authenticated/chef")({
   head: () => ({
@@ -78,7 +78,7 @@ function useMonthEntries(ym: string) {
         (
           await supabase
             .from("time_entries")
-            .select("*, sites(name), profiles(full_name, hourly_wage)")
+            .select("*, sites(name, lat, lng), profiles(full_name, hourly_wage)")
             .gte("clock_in", from.toISOString())
             .lt("clock_in", to.toISOString())
             .order("clock_in", { ascending: false })
@@ -154,6 +154,7 @@ function EntriesTab() {
                 {fmtDate(e.clock_in)} · {fmtTime(e.clock_in)}–{fmtTime(e.clock_out)} · <b>{fmtHours(entryHours(e))}</b> · {e.sites?.name ?? "—"}
               </div>
               {e.description && <div className="text-sm text-muted-foreground">{e.description}</div>}
+              <GpsInfo entry={e} />
             </div>
             <div className="flex gap-2">
               <Button onClick={() => setEntryStatus(e.id, "freigegeben")} disabled={e.status === "freigegeben"} className="h-12 flex-1 bg-success text-success-foreground hover:bg-success/90 sm:flex-none">
@@ -167,6 +168,47 @@ function EntriesTab() {
         ))}
         {filtered.length === 0 && <p className="py-8 text-center text-muted-foreground">Keine Einträge gefunden.</p>}
       </div>
+    </div>
+  );
+}
+
+type EntryWithSite = {
+  clock_in_lat: number | null;
+  clock_in_lng: number | null;
+  clock_out_lat: number | null;
+  clock_out_lng: number | null;
+  sites: { name: string; lat: number | null; lng: number | null } | null;
+};
+
+function GpsPin({ lat, lng, label, site }: { lat: number; lng: number; label: string; site: { lat: number | null; lng: number | null } | null }) {
+  const dist = site?.lat != null && site?.lng != null ? distanceMeters(lat, lng, site.lat, site.lng) : null;
+  const onSite = dist != null && dist <= 200;
+  return (
+    <a
+      href={osmLink(lat, lng)}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="mt-1 inline-flex items-center gap-1.5 rounded-lg bg-secondary px-2 py-1 text-xs font-semibold text-secondary-foreground"
+    >
+      <MapPin className="h-3.5 w-3.5 text-accent" />
+      {label}: {lat.toFixed(5)}, {lng.toFixed(5)}
+      {dist != null && (
+        <span className={onSite ? "text-success" : "text-destructive"}>
+          · {onSite ? "vor Ort" : `${fmtDistance(dist)} entfernt`}
+        </span>
+      )}
+    </a>
+  );
+}
+
+function GpsInfo({ entry: e }: { entry: EntryWithSite }) {
+  const hasIn = e.clock_in_lat != null && e.clock_in_lng != null;
+  const hasOut = e.clock_out_lat != null && e.clock_out_lng != null;
+  if (!hasIn && !hasOut) return null;
+  return (
+    <div className="flex flex-wrap gap-2">
+      {hasIn && <GpsPin lat={e.clock_in_lat!} lng={e.clock_in_lng!} label="Ein" site={e.sites} />}
+      {hasOut && <GpsPin lat={e.clock_out_lat!} lng={e.clock_out_lng!} label="Aus" site={e.sites} />}
     </div>
   );
 }
@@ -420,19 +462,58 @@ function Field({ label, value, onChange, type = "text", inputMode }: { label: st
   );
 }
 
+function SiteCoords({ site: s, onSave }: { site: { id: string; lat: number | null; lng: number | null }; onSave: (id: string, lat: string, lng: string) => void }) {
+  const [lat, setLat] = useState(s.lat != null ? String(s.lat).replace(".", ",") : "");
+  const [lng, setLng] = useState(s.lng != null ? String(s.lng).replace(".", ",") : "");
+  const dirty = lat !== (s.lat != null ? String(s.lat).replace(".", ",") : "") || lng !== (s.lng != null ? String(s.lng).replace(".", ",") : "");
+  return (
+    <div className="mt-2 flex items-center gap-2">
+      <MapPin className="h-4 w-4 shrink-0 text-accent" />
+      <Input value={lat} onChange={(e) => setLat(e.target.value)} inputMode="decimal" placeholder="Breitengrad" className="h-10 text-sm" />
+      <Input value={lng} onChange={(e) => setLng(e.target.value)} inputMode="decimal" placeholder="Längengrad" className="h-10 text-sm" />
+      {dirty && (
+        <Button variant="outline" className="h-10 shrink-0" onClick={() => onSave(s.id, lat, lng)}>
+          <Check />
+        </Button>
+      )}
+    </div>
+  );
+}
+
 function SitesTab() {
   const qc = useQueryClient();
   const { data: sites = [] } = useSites();
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
+  const [lat, setLat] = useState("");
+  const [lng, setLng] = useState("");
+
+  const parseCoord = (v: string) => {
+    const n = Number(v.replace(",", "."));
+    return v.trim() && !Number.isNaN(n) ? n : null;
+  };
 
   async function add(e: React.FormEvent) {
     e.preventDefault();
-    const { error } = await supabase.from("sites").insert({ name: name.trim(), address: address.trim() || null });
+    const { error } = await supabase.from("sites").insert({
+      name: name.trim(),
+      address: address.trim() || null,
+      lat: parseCoord(lat),
+      lng: parseCoord(lng),
+    });
     if (error) { toast.error(error.message); return; }
     setName("");
     setAddress("");
+    setLat("");
+    setLng("");
     toast.success("Baustelle angelegt");
+    qc.invalidateQueries({ queryKey: ["sites"] });
+  }
+
+  async function saveCoords(id: string, latV: string, lngV: string) {
+    const { error } = await supabase.from("sites").update({ lat: parseCoord(latV), lng: parseCoord(lngV) }).eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Koordinaten gespeichert");
     qc.invalidateQueries({ queryKey: ["sites"] });
   }
 
@@ -451,20 +532,33 @@ function SitesTab() {
           <Label>Adresse (optional)</Label>
           <Input value={address} onChange={(e) => setAddress(e.target.value)} className="h-12 text-base" />
         </div>
+        <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-1">
+            <Label>Breitengrad (optional)</Label>
+            <Input inputMode="decimal" placeholder="52.5200" value={lat} onChange={(e) => setLat(e.target.value)} className="h-12 text-base" />
+          </div>
+          <div className="space-y-1">
+            <Label>Längengrad (optional)</Label>
+            <Input inputMode="decimal" placeholder="13.4050" value={lng} onChange={(e) => setLng(e.target.value)} className="h-12 text-base" />
+          </div>
+        </div>
         <Button className="h-12 w-full bg-accent text-accent-foreground hover:bg-accent/90">
           <Plus /> Anlegen
         </Button>
       </form>
       <div className="space-y-2">
         {sites.map((s) => (
-          <div key={s.id} className="flex items-center gap-3 rounded-2xl bg-card p-4 shadow-sm">
-            <div className="min-w-0 flex-1">
-              <div className="font-semibold">{s.name}</div>
-              {s.address && <div className="text-xs text-muted-foreground">{s.address}</div>}
+          <div key={s.id} className="rounded-2xl bg-card p-4 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="min-w-0 flex-1">
+                <div className="font-semibold">{s.name}</div>
+                {s.address && <div className="text-xs text-muted-foreground">{s.address}</div>}
+              </div>
+              <Button variant={s.active ? "outline" : "default"} className="h-11" onClick={() => toggle(s.id, !s.active)}>
+                {s.active ? "Abschließen" : "Reaktivieren"}
+              </Button>
             </div>
-            <Button variant={s.active ? "outline" : "default"} className="h-11" onClick={() => toggle(s.id, !s.active)}>
-              {s.active ? "Abschließen" : "Reaktivieren"}
-            </Button>
+            <SiteCoords site={s} onSave={saveCoords} />
           </div>
         ))}
         {sites.length === 0 && <p className="py-8 text-center text-muted-foreground">Noch keine Baustellen.</p>}

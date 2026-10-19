@@ -78,6 +78,24 @@ export function approvedAbsenceDaysInMonth(absences: AbsenceLike[], from: Date, 
   return { urlaub, krank };
 }
 
+/** Distanz zwischen zwei GPS-Punkten in Metern (Haversine). */
+export function distanceMeters(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6_371_000;
+  const rad = (d: number) => (d * Math.PI) / 180;
+  const dLat = rad(lat2 - lat1), dLng = rad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+export function fmtDistance(m: number): string {
+  return m < 1000 ? `${Math.round(m)} m` : `${(m / 1000).toFixed(1).replace(".", ",")} km`;
+}
+
+/** OpenStreetMap-Link zu einem GPS-Punkt. */
+export function osmLink(lat: number, lng: number): string {
+  return `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=18/${lat}/${lng}`;
+}
+
 export function toCsv(rows: (string | number)[][]): string {
   return rows
     .map((r) =>
