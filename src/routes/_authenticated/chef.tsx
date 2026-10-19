@@ -186,6 +186,88 @@ function FilterSelect({ label, value, onChange, options }: { label: string; valu
   );
 }
 
+const absenceTypeLabel: Record<string, string> = { urlaub: "Urlaub", krank: "Krankmeldung", sonstiges: "Sonstiges" };
+const fmtD = (s: string) => new Date(s + "T00:00:00").toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
+
+function useMonthAbsences(ym: string) {
+  return useQuery({
+    queryKey: ["absences", ym],
+    queryFn: async () => {
+      const { from, to } = monthRange(ym);
+      const iso = (d: Date) => d.toISOString().slice(0, 10);
+      return (
+        (
+          await supabase
+            .from("absences")
+            .select("*, profiles(full_name)")
+            .lte("start_date", iso(to))
+            .gte("end_date", iso(from))
+            .order("start_date", { ascending: false })
+        ).data ?? []
+      );
+    },
+  });
+}
+
+function AbsencesTab() {
+  const qc = useQueryClient();
+  const [ym, setYm] = useState(currentYm());
+  const [emp, setEmp] = useState("alle");
+  const [type, setType] = useState("alle");
+  const [status, setStatus] = useState("alle");
+  const { data: profiles = [] } = useProfiles();
+  const { data: absences = [] } = useMonthAbsences(ym);
+
+  const filtered = absences.filter(
+    (a) =>
+      (emp === "alle" || a.user_id === emp) &&
+      (type === "alle" || a.type === type) &&
+      (status === "alle" || a.status === status),
+  );
+
+  async function setAbsenceStatus(id: string, s: "genehmigt" | "abgelehnt") {
+    const { error } = await supabase.from("absences").update({ status: s }).eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    qc.invalidateQueries({ queryKey: ["absences"] });
+  }
+
+  return (
+    <div className="mt-4 space-y-4">
+      <div className="grid grid-cols-2 gap-3 rounded-2xl bg-card p-4 shadow-sm md:grid-cols-4">
+        <MonthInput value={ym} onChange={setYm} />
+        <FilterSelect label="Mitarbeiter" value={emp} onChange={setEmp} options={profiles.map((p) => [p.id, p.full_name])} />
+        <FilterSelect label="Typ" value={type} onChange={setType} options={[["urlaub", "Urlaub"], ["krank", "Krankmeldung"], ["sonstiges", "Sonstiges"]]} />
+        <FilterSelect label="Status" value={status} onChange={setStatus} options={[["offen", "Offen"], ["genehmigt", "Genehmigt"], ["abgelehnt", "Abgelehnt"]]} />
+      </div>
+      <span className="text-sm text-muted-foreground">{filtered.length} Anträge</span>
+      <div className="space-y-2">
+        {filtered.map((a) => (
+          <div key={a.id} className="flex flex-col gap-3 rounded-2xl bg-card p-4 shadow-sm sm:flex-row sm:items-center">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 font-semibold">
+                {a.profiles?.full_name} <StatusBadge status={a.status} />
+              </div>
+              <div className="text-sm">
+                {absenceTypeLabel[a.type]} · {fmtD(a.start_date)} – {fmtD(a.end_date)} · <b>{absenceDays(a)} {absenceDays(a) === 1 ? "Tag" : "Tage"}</b>
+              </div>
+              {a.note && <div className="text-sm text-muted-foreground">{a.note}</div>}
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={() => setAbsenceStatus(a.id, "genehmigt")} disabled={a.status === "genehmigt"} className="h-12 flex-1 bg-success text-success-foreground hover:bg-success/90 sm:flex-none">
+                <Check /> Genehmigen
+              </Button>
+              <Button onClick={() => setAbsenceStatus(a.id, "abgelehnt")} disabled={a.status === "abgelehnt"} variant="destructive" className="h-12 flex-1 sm:flex-none">
+                <X /> Ablehnen
+              </Button>
+            </div>
+          </div>
+        ))}
+        {filtered.length === 0 && <p className="py-8 text-center text-muted-foreground">Keine Anträge gefunden.</p>}
+      </div>
+    </div>
+  );
+}
+
 function MonthTab() {
   const [ym, setYm] = useState(currentYm());
   const { data: profiles = [] } = useProfiles();
