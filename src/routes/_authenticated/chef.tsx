@@ -172,6 +172,47 @@ function EntriesTab() {
   );
 }
 
+type EntryWithSite = {
+  clock_in_lat: number | null;
+  clock_in_lng: number | null;
+  clock_out_lat: number | null;
+  clock_out_lng: number | null;
+  sites: { name: string; lat: number | null; lng: number | null } | null;
+};
+
+function GpsPin({ lat, lng, label, site }: { lat: number; lng: number; label: string; site: { lat: number | null; lng: number | null } | null }) {
+  const dist = site?.lat != null && site?.lng != null ? distanceMeters(lat, lng, site.lat, site.lng) : null;
+  const onSite = dist != null && dist <= 200;
+  return (
+    <a
+      href={osmLink(lat, lng)}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="mt-1 inline-flex items-center gap-1.5 rounded-lg bg-secondary px-2 py-1 text-xs font-semibold text-secondary-foreground"
+    >
+      <MapPin className="h-3.5 w-3.5 text-accent" />
+      {label}: {lat.toFixed(5)}, {lng.toFixed(5)}
+      {dist != null && (
+        <span className={onSite ? "text-success" : "text-destructive"}>
+          · {onSite ? "vor Ort" : `${fmtDistance(dist)} entfernt`}
+        </span>
+      )}
+    </a>
+  );
+}
+
+function GpsInfo({ entry: e }: { entry: EntryWithSite }) {
+  const hasIn = e.clock_in_lat != null && e.clock_in_lng != null;
+  const hasOut = e.clock_out_lat != null && e.clock_out_lng != null;
+  if (!hasIn && !hasOut) return null;
+  return (
+    <div className="flex flex-wrap gap-2">
+      {hasIn && <GpsPin lat={e.clock_in_lat!} lng={e.clock_in_lng!} label="Ein" site={e.sites} />}
+      {hasOut && <GpsPin lat={e.clock_out_lat!} lng={e.clock_out_lng!} label="Aus" site={e.sites} />}
+    </div>
+  );
+}
+
 function FilterSelect({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: string[][] }) {
   return (
     <div className="space-y-1">
