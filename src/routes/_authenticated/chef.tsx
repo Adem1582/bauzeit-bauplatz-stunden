@@ -154,6 +154,7 @@ function EntriesTab() {
                 {fmtDate(e.clock_in)} · {fmtTime(e.clock_in)}–{fmtTime(e.clock_out)} · <b>{fmtHours(entryHours(e))}</b> · {e.sites?.name ?? "—"}
               </div>
               {e.description && <div className="text-sm text-muted-foreground">{e.description}</div>}
+              <GpsInfo entry={e} />
             </div>
             <div className="flex gap-2">
               <Button onClick={() => setEntryStatus(e.id, "freigegeben")} disabled={e.status === "freigegeben"} className="h-12 flex-1 bg-success text-success-foreground hover:bg-success/90 sm:flex-none">
