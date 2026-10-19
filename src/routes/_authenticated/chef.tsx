@@ -462,6 +462,24 @@ function Field({ label, value, onChange, type = "text", inputMode }: { label: st
   );
 }
 
+function SiteCoords({ site: s, onSave }: { site: { id: string; lat: number | null; lng: number | null }; onSave: (id: string, lat: string, lng: string) => void }) {
+  const [lat, setLat] = useState(s.lat != null ? String(s.lat).replace(".", ",") : "");
+  const [lng, setLng] = useState(s.lng != null ? String(s.lng).replace(".", ",") : "");
+  const dirty = lat !== (s.lat != null ? String(s.lat).replace(".", ",") : "") || lng !== (s.lng != null ? String(s.lng).replace(".", ",") : "");
+  return (
+    <div className="mt-2 flex items-center gap-2">
+      <MapPin className="h-4 w-4 shrink-0 text-accent" />
+      <Input value={lat} onChange={(e) => setLat(e.target.value)} inputMode="decimal" placeholder="Breitengrad" className="h-10 text-sm" />
+      <Input value={lng} onChange={(e) => setLng(e.target.value)} inputMode="decimal" placeholder="Längengrad" className="h-10 text-sm" />
+      {dirty && (
+        <Button variant="outline" className="h-10 shrink-0" onClick={() => onSave(s.id, lat, lng)}>
+          <Check />
+        </Button>
+      )}
+    </div>
+  );
+}
+
 function SitesTab() {
   const qc = useQueryClient();
   const { data: sites = [] } = useSites();
