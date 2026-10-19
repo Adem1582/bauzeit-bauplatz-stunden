@@ -327,6 +327,8 @@ function MonthTab() {
                 <td className="p-3 text-right">{fmtHours(r.hours)}</td>
                 <td className="p-3 text-right">{fmtHours(r.approved)}</td>
                 <td className="p-3 text-right">{r.open}</td>
+                <td className="p-3 text-right">{r.urlaub > 0 ? `${r.urlaub} T` : "—"}</td>
+                <td className="p-3 text-right">{r.krank > 0 ? `${r.krank} T` : "—"}</td>
                 <td className="p-3 text-right">{eur(Number(r.p.hourly_wage))}</td>
                 <td className="p-3 text-right font-bold">{eur(r.wage)}</td>
               </tr>
@@ -334,7 +336,7 @@ function MonthTab() {
           </tbody>
           <tfoot>
             <tr className="border-t-2 font-bold">
-              <td className="p-3" colSpan={5}>Summe</td>
+              <td className="p-3" colSpan={7}>Summe</td>
               <td className="p-3 text-right text-accent-foreground"><span className="rounded bg-accent px-2 py-1">{eur(total)}</span></td>
             </tr>
           </tfoot>
