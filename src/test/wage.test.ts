@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { approvedAbsenceDaysInMonth, absenceDays, calcWage, entryHours } from "@/lib/time";
+import { approvedAbsenceDaysInMonth, absenceDays, calcWage, distanceMeters, entryHours } from "@/lib/time";
 
 describe("Lohnberechnung", () => {
   it("Stunden werden aus Ein-/Ausstempeln berechnet", () => {
