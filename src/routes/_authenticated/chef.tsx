@@ -514,20 +514,54 @@ function SitesTab() {
           <Label>Adresse (optional)</Label>
           <Input value={address} onChange={(e) => setAddress(e.target.value)} className="h-12 text-base" />
         </div>
+        <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-1">
+            <Label>Breitengrad (optional)</Label>
+            <Input inputMode="decimal" placeholder="52.5200" value={lat} onChange={(e) => setLat(e.target.value)} className="h-12 text-base" />
+          </div>
+          <div className="space-y-1">
+            <Label>Längengrad (optional)</Label>
+            <Input inputMode="decimal" placeholder="13.4050" value={lng} onChange={(e) => setLng(e.target.value)} className="h-12 text-base" />
+          </div>
+        </div>
         <Button className="h-12 w-full bg-accent text-accent-foreground hover:bg-accent/90">
           <Plus /> Anlegen
         </Button>
       </form>
       <div className="space-y-2">
         {sites.map((s) => (
-          <div key={s.id} className="flex items-center gap-3 rounded-2xl bg-card p-4 shadow-sm">
-            <div className="min-w-0 flex-1">
-              <div className="font-semibold">{s.name}</div>
-              {s.address && <div className="text-xs text-muted-foreground">{s.address}</div>}
+          <div key={s.id} className="rounded-2xl bg-card p-4 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="min-w-0 flex-1">
+                <div className="font-semibold">{s.name}</div>
+                {s.address && <div className="text-xs text-muted-foreground">{s.address}</div>}
+              </div>
+              <Button variant={s.active ? "outline" : "default"} className="h-11" onClick={() => toggle(s.id, !s.active)}>
+                {s.active ? "Abschließen" : "Reaktivieren"}
+              </Button>
             </div>
-            <Button variant={s.active ? "outline" : "default"} className="h-11" onClick={() => toggle(s.id, !s.active)}>
-              {s.active ? "Abschließen" : "Reaktivieren"}
-            </Button>
+            <div className="mt-2 flex items-center gap-2">
+              <MapPin className="h-4 w-4 shrink-0 text-accent" />
+              <Input
+                key={`lat-${s.id}-${s.lat}`}
+                defaultValue={s.lat != null ? String(s.lat).replace(".", ",") : ""}
+                inputMode="decimal"
+                placeholder="Breitengrad"
+                className="h-10 text-sm"
+              />
+              <Input
+                key={`lng-${s.id}-${s.lng}`}
+                defaultValue={s.lng != null ? String(s.lng).replace(".", ",") : ""}
+                inputMode="decimal"
+                placeholder="Längengrad"
+                className="h-10 text-sm"
+                onBlur={(e) => {
+                  const form = e.target.closest("div")!.parentElement!;
+                  const latInput = form.querySelectorAll("input")[0] as HTMLInputElement;
+                  if (e.target.value || latInput.value) saveCoords(s.id, latInput.value, e.target.value);
+                }}
+              />
+            </div>
           </div>
         ))}
         {sites.length === 0 && <p className="py-8 text-center text-muted-foreground">Noch keine Baustellen.</p>}
