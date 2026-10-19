@@ -88,6 +88,8 @@ export type Database = {
           address: string | null
           created_at: string
           id: string
+          lat: number | null
+          lng: number | null
           name: string
         }
         Insert: {
@@ -95,6 +97,8 @@ export type Database = {
           address?: string | null
           created_at?: string
           id?: string
+          lat?: number | null
+          lng?: number | null
           name: string
         }
         Update: {
@@ -102,6 +106,8 @@ export type Database = {
           address?: string | null
           created_at?: string
           id?: string
+          lat?: number | null
+          lng?: number | null
           name?: string
         }
         Relationships: []
@@ -109,7 +115,11 @@ export type Database = {
       time_entries: {
         Row: {
           clock_in: string
+          clock_in_lat: number | null
+          clock_in_lng: number | null
           clock_out: string | null
+          clock_out_lat: number | null
+          clock_out_lng: number | null
           created_at: string
           description: string | null
           id: string
@@ -119,7 +129,11 @@ export type Database = {
         }
         Insert: {
           clock_in?: string
+          clock_in_lat?: number | null
+          clock_in_lng?: number | null
           clock_out?: string | null
+          clock_out_lat?: number | null
+          clock_out_lng?: number | null
           created_at?: string
           description?: string | null
           id?: string
@@ -129,7 +143,11 @@ export type Database = {
         }
         Update: {
           clock_in?: string
+          clock_in_lat?: number | null
+          clock_in_lng?: number | null
           clock_out?: string | null
+          clock_out_lat?: number | null
+          clock_out_lng?: number | null
           created_at?: string
           description?: string | null
           id?: string

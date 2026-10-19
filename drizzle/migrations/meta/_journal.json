@@ -15,6 +15,13 @@
       "when": 1792394497887,
       "tag": "0001_create_absences",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792394712870,
+      "tag": "0002_add_gps_location",
+      "breakpoints": true
     }
   ]
 }
