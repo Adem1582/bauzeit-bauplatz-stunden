@@ -2,7 +2,7 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Check, Download, Plus, X } from "lucide-react";
+import { Check, Download, MapPin, Plus, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppHeader } from "@/components/AppHeader";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { createEmployee } from "@/lib/admin.functions";
-import { absenceDays, approvedAbsenceDaysInMonth, calcWage, currentYm, downloadCsv, eur, fmtDate, fmtHours, fmtTime, entryHours, monthRange, toCsv } from "@/lib/time";
+import { absenceDays, approvedAbsenceDaysInMonth, calcWage, currentYm, distanceMeters, downloadCsv, eur, fmtDate, fmtDistance, fmtHours, fmtTime, entryHours, monthRange, osmLink, toCsv } from "@/lib/time";
 
 export const Route = createFileRoute("/_authenticated/chef")({
   head: () => ({
@@ -78,7 +78,7 @@ function useMonthEntries(ym: string) {
         (
           await supabase
             .from("time_entries")
-            .select("*, sites(name), profiles(full_name, hourly_wage)")
+            .select("*, sites(name, lat, lng), profiles(full_name, hourly_wage)")
             .gte("clock_in", from.toISOString())
             .lt("clock_in", to.toISOString())
             .order("clock_in", { ascending: false })
