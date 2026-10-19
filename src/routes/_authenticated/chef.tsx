@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { createEmployee } from "@/lib/admin.functions";
-import { calcWage, currentYm, downloadCsv, eur, fmtDate, fmtHours, fmtTime, entryHours, monthRange, toCsv } from "@/lib/time";
+import { absenceDays, approvedAbsenceDaysInMonth, calcWage, currentYm, downloadCsv, eur, fmtDate, fmtHours, fmtTime, entryHours, monthRange, toCsv } from "@/lib/time";
 
 export const Route = createFileRoute("/_authenticated/chef")({
   head: () => ({
@@ -51,13 +51,15 @@ function ChefPage() {
       <main className="mx-auto max-w-5xl px-4 pt-5">
         <h1 className="mb-4 text-3xl font-extrabold uppercase">Chef-Bereich</h1>
         <Tabs defaultValue="eintraege">
-          <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:grid-cols-4">
+          <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:grid-cols-5">
             <TabsTrigger value="eintraege" className="py-2.5">Einträge</TabsTrigger>
+            <TabsTrigger value="abwesenheiten" className="py-2.5">Abwesenheiten</TabsTrigger>
             <TabsTrigger value="monat" className="py-2.5">Monat & Lohn</TabsTrigger>
             <TabsTrigger value="mitarbeiter" className="py-2.5">Mitarbeiter</TabsTrigger>
             <TabsTrigger value="baustellen" className="py-2.5">Baustellen</TabsTrigger>
           </TabsList>
           <TabsContent value="eintraege"><EntriesTab /></TabsContent>
+          <TabsContent value="abwesenheiten"><AbsencesTab /></TabsContent>
           <TabsContent value="monat"><MonthTab /></TabsContent>
           <TabsContent value="mitarbeiter"><EmployeesTab /></TabsContent>
           <TabsContent value="baustellen"><SitesTab /></TabsContent>
