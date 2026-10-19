@@ -540,28 +540,7 @@ function SitesTab() {
                 {s.active ? "Abschließen" : "Reaktivieren"}
               </Button>
             </div>
-            <div className="mt-2 flex items-center gap-2">
-              <MapPin className="h-4 w-4 shrink-0 text-accent" />
-              <Input
-                key={`lat-${s.id}-${s.lat}`}
-                defaultValue={s.lat != null ? String(s.lat).replace(".", ",") : ""}
-                inputMode="decimal"
-                placeholder="Breitengrad"
-                className="h-10 text-sm"
-              />
-              <Input
-                key={`lng-${s.id}-${s.lng}`}
-                defaultValue={s.lng != null ? String(s.lng).replace(".", ",") : ""}
-                inputMode="decimal"
-                placeholder="Längengrad"
-                className="h-10 text-sm"
-                onBlur={(e) => {
-                  const form = e.target.closest("div")!.parentElement!;
-                  const latInput = form.querySelectorAll("input")[0] as HTMLInputElement;
-                  if (e.target.value || latInput.value) saveCoords(s.id, latInput.value, e.target.value);
-                }}
-              />
-            </div>
+            <SiteCoords site={s} onSave={saveCoords} />
           </div>
         ))}
         {sites.length === 0 && <p className="py-8 text-center text-muted-foreground">Noch keine Baustellen.</p>}
