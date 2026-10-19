@@ -272,6 +272,7 @@ function MonthTab() {
   const [ym, setYm] = useState(currentYm());
   const { data: profiles = [] } = useProfiles();
   const { data: entries = [] } = useMonthEntries(ym);
+  const { data: absences = [] } = useMonthAbsences(ym);
 
   const rows = useMemo(
     () =>
@@ -279,17 +280,19 @@ function MonthTab() {
         const mine = entries.filter((e) => e.user_id === p.id);
         const { hours, wage } = calcWage(mine, Number(p.hourly_wage));
         const approved = calcWage(mine.filter((e) => e.status === "freigegeben"), Number(p.hourly_wage)).hours;
-        return { p, hours, approved, open: mine.filter((e) => e.status === "offen").length, wage };
+        const { from, to } = monthRange(ym);
+        const ab = approvedAbsenceDaysInMonth(absences.filter((a) => a.user_id === p.id), from, to);
+        return { p, hours, approved, open: mine.filter((e) => e.status === "offen").length, wage, urlaub: ab.urlaub, krank: ab.krank };
       }),
-    [profiles, entries],
+    [profiles, entries, absences, ym],
   );
   const total = rows.reduce((s, r) => s + r.wage, 0);
 
   function exportCsv() {
     const csv = toCsv([
-      ["Mitarbeiter", "E-Mail", "Monat", "Stunden gesamt", "davon freigegeben", "Stundenlohn (EUR)", "Lohn (EUR)"],
-      ...rows.map((r) => [r.p.full_name, r.p.email ?? "", ym, r.hours, r.approved, Number(r.p.hourly_wage), r.wage]),
-      ["Summe", "", ym, rows.reduce((s, r) => s + r.hours, 0), rows.reduce((s, r) => s + r.approved, 0), "", total],
+      ["Mitarbeiter", "E-Mail", "Monat", "Stunden gesamt", "davon freigegeben", "Urlaubstage", "Kranktage", "Stundenlohn (EUR)", "Lohn (EUR)"],
+      ...rows.map((r) => [r.p.full_name, r.p.email ?? "", ym, r.hours, r.approved, r.urlaub, r.krank, Number(r.p.hourly_wage), r.wage]),
+      ["Summe", "", ym, rows.reduce((s, r) => s + r.hours, 0), rows.reduce((s, r) => s + r.approved, 0), rows.reduce((s, r) => s + r.urlaub, 0), rows.reduce((s, r) => s + r.krank, 0), "", total],
     ]);
     downloadCsv(`lohn-${ym}.csv`, csv);
   }
@@ -311,6 +314,8 @@ function MonthTab() {
               <th className="p-3 text-right">Stunden</th>
               <th className="p-3 text-right">Freigegeben</th>
               <th className="p-3 text-right">Offen</th>
+              <th className="p-3 text-right">Urlaub</th>
+              <th className="p-3 text-right">Krank</th>
               <th className="p-3 text-right">€/h</th>
               <th className="p-3 text-right">Lohn</th>
             </tr>
