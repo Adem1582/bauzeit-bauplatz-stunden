@@ -20,10 +20,10 @@ function NotFoundComponent() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Seite nicht gefunden</h2>
+        <h2 className="mt-4 text-xl font-semibold text-foreground">Faqja nuk u gjet</h2>
         <div className="mt-6">
           <Link to="/" className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
-            Zur Startseite
+            Tek faqja kryesore
           </Link>
         </div>
       </div>
@@ -40,8 +40,8 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold text-foreground">Seite konnte nicht geladen werden</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Etwas ist schiefgelaufen. Bitte erneut versuchen.</p>
+        <h1 className="text-xl font-semibold text-foreground">Faqja nuk u ngarkua</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Diçka shkoi keq. Provo përsëri.</p>
         <button
           onClick={() => {
             router.invalidate();
@@ -49,7 +49,7 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
           }}
           className="mt-6 inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
         >
-          Erneut versuchen
+          Provo përsëri
         </button>
       </div>
     </div>
@@ -61,8 +61,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "ALB PROJEKT – Zeiterfassung" },
-      { name: "description", content: "Zeiterfassung für die Baustelle: Ein- und Ausstempeln, Baustellen, Freigaben und Lohnübersicht." },
+      { title: "ALB PROJEKT – Regjistrimi i orëve" },
+      { name: "description", content: "Regjistrimi i orëve në kantier: hyrje/dalje, kantierë, miratime dhe pagat." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "theme-color", content: "#14213d" },
@@ -86,7 +86,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="de">
+    <html lang="sq">
       <head>
         <HeadContent />
       </head>
