@@ -17,9 +17,9 @@ import { absenceDays, approvedAbsenceDaysInMonth, calcWage, currentYm, distanceM
 export const Route = createFileRoute("/_authenticated/chef")({
   head: () => ({
     meta: [
-      { title: "Chef-Bereich – Bau-Stempeluhr" },
+      { title: "Chef-Bereich – ALB PROJEKT" },
       { name: "description", content: "Mitarbeiter, Baustellen, Freigaben und Monatslohn verwalten." },
-      { property: "og:title", content: "Chef-Bereich – Bau-Stempeluhr" },
+      { property: "og:title", content: "Chef-Bereich – ALB PROJEKT" },
       { property: "og:description", content: "Verwaltung der Zeiterfassung." },
     ],
   }),

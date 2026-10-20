@@ -5,9 +5,9 @@ export const Route = createFileRoute("/")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Bau-Stempeluhr – Zeiterfassung für die Baustelle" },
+      { title: "ALB PROJEKT – Zeiterfassung für die Baustelle" },
       { name: "description", content: "Einfach ein- und ausstempeln, Baustelle wählen, Stunden und Lohn im Blick." },
-      { property: "og:title", content: "Bau-Stempeluhr" },
+      { property: "og:title", content: "ALB PROJEKT" },
       { property: "og:description", content: "Zeiterfassung für kleine Baufirmen – mobil auf der Baustelle." },
     ],
   }),

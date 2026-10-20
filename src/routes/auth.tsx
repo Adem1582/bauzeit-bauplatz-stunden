@@ -11,9 +11,9 @@ export const Route = createFileRoute("/auth")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Anmelden – Bau-Stempeluhr" },
-      { name: "description", content: "Mit E-Mail und Passwort bei der Bau-Stempeluhr anmelden." },
-      { property: "og:title", content: "Anmelden – Bau-Stempeluhr" },
+      { title: "Anmelden – ALB PROJEKT" },
+      { name: "description", content: "Mit E-Mail und Passwort bei der ALB PROJEKT anmelden." },
+      { property: "og:title", content: "Anmelden – ALB PROJEKT" },
       { property: "og:description", content: "Anmeldung zur Zeiterfassung." },
     ],
   }),
@@ -62,7 +62,7 @@ function AuthPage() {
           <div className="rounded-2xl bg-accent p-3 text-accent-foreground">
             <HardHat className="h-8 w-8" />
           </div>
-          <h1 className="text-4xl font-extrabold uppercase">Bau-Stempeluhr</h1>
+          <h1 className="text-4xl font-extrabold uppercase">ALB PROJEKT</h1>
         </div>
         <form onSubmit={submit} className="w-full max-w-sm space-y-4 rounded-2xl bg-card p-6 shadow-2xl">
           <h2 className="text-2xl font-bold">{mode === "login" ? "Anmelden" : "Chef-Konto einrichten"}</h2>
