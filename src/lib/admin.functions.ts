@@ -17,7 +17,7 @@ export const createEmployee = createServerFn({ method: "POST" })
       _user_id: context.userId,
       _role: "admin",
     });
-    if (!isAdmin) throw new Error("Keine Berechtigung");
+    if (!isAdmin) throw new Error("Nuk ke leje për këtë veprim");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.auth.admin.createUser({
       email: data.email,

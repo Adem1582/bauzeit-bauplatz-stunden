@@ -11,10 +11,10 @@ export const Route = createFileRoute("/auth")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Anmelden – ALB PROJEKT" },
-      { name: "description", content: "Mit E-Mail und Passwort bei ALB PROJEKT anmelden." },
-      { property: "og:title", content: "Anmelden – ALB PROJEKT" },
-      { property: "og:description", content: "Anmeldung zur Zeiterfassung." },
+      { title: "Hyrje – ALB PROJEKT" },
+      { name: "description", content: "Hyr në ALB PROJEKT me email dhe fjalëkalim." },
+      { property: "og:title", content: "Hyrje – ALB PROJEKT" },
+      { property: "og:description", content: "Hyrje në regjistrimin e orëve." },
     ],
   }),
   component: AuthPage,
@@ -40,7 +40,7 @@ function AuthPage() {
     if (mode === "login") {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       setBusy(false);
-      if (error) { toast.error("Anmeldung fehlgeschlagen. E-Mail oder Passwort falsch."); return; }
+      if (error) { toast.error("Hyrja dështoi. Email-i ose fjalëkalimi është gabim."); return; }
       navigate({ to: "/" });
     } else {
       const { data, error } = await supabase.auth.signUp({
@@ -51,7 +51,7 @@ function AuthPage() {
       setBusy(false);
       if (error) { toast.error(error.message); return; }
       if (data.session) navigate({ to: "/" });
-      else toast.success("Bitte bestätige deine E-Mail-Adresse über den Link im Postfach.");
+      else toast.success("Konfirmo email-in tënd përmes linkut që të erdhi në postë.");
     }
   }
 
@@ -65,30 +65,30 @@ function AuthPage() {
           <h1 className="text-4xl font-extrabold uppercase">ALB PROJEKT</h1>
         </div>
         <form onSubmit={submit} className="w-full max-w-sm space-y-4 rounded-2xl bg-card p-6 shadow-2xl">
-          <h2 className="text-2xl font-bold">{mode === "login" ? "Anmelden" : "Chef-Konto einrichten"}</h2>
+          <h2 className="text-2xl font-bold">{mode === "login" ? "Hyrje" : "Krijo llogarinë e shefit"}</h2>
           {mode === "setup" && (
             <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name">Emri</Label>
               <Input id="name" className="h-12 text-base" value={name} onChange={(e) => setName(e.target.value)} required />
             </div>
           )}
           <div className="space-y-2">
-            <Label htmlFor="email">E-Mail</Label>
+            <Label htmlFor="email">Email</Label>
             <Input id="email" type="email" autoComplete="email" className="h-12 text-base" value={email} onChange={(e) => setEmail(e.target.value)} required />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="pw">Passwort</Label>
+            <Label htmlFor="pw">Fjalëkalimi</Label>
             <Input id="pw" type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} minLength={8} className="h-12 text-base" value={password} onChange={(e) => setPassword(e.target.value)} required />
           </div>
           <Button type="submit" disabled={busy} className="w-full h-14 text-lg font-bold bg-accent text-accent-foreground hover:bg-accent/90">
-            {busy ? "Bitte warten…" : mode === "login" ? "Anmelden" : "Konto erstellen"}
+            {busy ? "Prisni…" : mode === "login" ? "Hyr" : "Krijo llogarinë"}
           </Button>
           {!adminExists && (
             <button type="button" onClick={() => setMode(mode === "login" ? "setup" : "login")} className="w-full text-sm text-muted-foreground underline">
-              {mode === "login" ? "Erste Einrichtung: Chef-Konto anlegen" : "Zurück zur Anmeldung"}
+              {mode === "login" ? "Konfigurimi i parë: krijo llogarinë e shefit" : "Kthehu te hyrja"}
             </button>
           )}
-          {adminExists && <p className="text-center text-xs text-muted-foreground">Zugangsdaten erhältst du vom Chef.</p>}
+          {adminExists && <p className="text-center text-xs text-muted-foreground">Të dhënat e hyrjes i merr nga shefi.</p>}
         </form>
       </div>
     </div>
