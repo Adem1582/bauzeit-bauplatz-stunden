@@ -12,7 +12,7 @@ export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
       { title: "Anmelden – ALB PROJEKT" },
-      { name: "description", content: "Mit E-Mail und Passwort bei der ALB PROJEKT anmelden." },
+      { name: "description", content: "Mit E-Mail und Passwort bei ALB PROJEKT anmelden." },
       { property: "og:title", content: "Anmelden – ALB PROJEKT" },
       { property: "og:description", content: "Anmeldung zur Zeiterfassung." },
     ],
