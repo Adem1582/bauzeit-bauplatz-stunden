@@ -17,9 +17,9 @@ import { absenceDays } from "@/lib/time";
 export const Route = createFileRoute("/_authenticated/abwesenheit")({
   head: () => ({
     meta: [
-      { title: "Abwesenheiten – Bau-Stempeluhr" },
+      { title: "Abwesenheiten – ALB PROJEKT" },
       { name: "description", content: "Urlaub und Krankmeldung einreichen und Status verfolgen." },
-      { property: "og:title", content: "Abwesenheiten – Bau-Stempeluhr" },
+      { property: "og:title", content: "Abwesenheiten – ALB PROJEKT" },
       { property: "og:description", content: "Abwesenheiten einreichen und verwalten." },
     ],
   }),

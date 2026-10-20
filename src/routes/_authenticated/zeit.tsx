@@ -39,9 +39,9 @@ function getPosition(): Promise<Gps> {
 export const Route = createFileRoute("/_authenticated/zeit")({
   head: () => ({
     meta: [
-      { title: "Stempeln – Bau-Stempeluhr" },
+      { title: "Stempeln – ALB PROJEKT" },
       { name: "description", content: "Ein- und ausstempeln, Baustelle wählen und Tätigkeit eintragen." },
-      { property: "og:title", content: "Stempeln – Bau-Stempeluhr" },
+      { property: "og:title", content: "Stempeln – ALB PROJEKT" },
       { property: "og:description", content: "Arbeitszeit auf der Baustelle erfassen." },
     ],
   }),

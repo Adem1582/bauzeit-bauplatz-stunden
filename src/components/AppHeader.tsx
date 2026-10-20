@@ -23,7 +23,7 @@ export function AppHeader() {
           <HardHat className="h-5 w-5" />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="font-display text-xl font-bold uppercase leading-none">Bau-Stempeluhr</div>
+          <div className="font-display text-xl font-bold uppercase leading-none">ALB PROJEKT</div>
           <div className="truncate text-xs opacity-80">{me?.name}</div>
         </div>
         <nav className="flex gap-1 text-sm font-semibold">
