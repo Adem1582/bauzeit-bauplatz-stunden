@@ -30,7 +30,7 @@ export function fmtHours(h: number): string {
 }
 
 export const eur = (n: number) =>
-  n.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
+  n.toLocaleString("sq-AL", { style: "currency", currency: "EUR" });
 
 export function startOfWeek(d: Date): Date {
   const x = new Date(d);
@@ -50,10 +50,10 @@ export function currentYm(d = new Date()): string {
 }
 
 export function fmtTime(s: string | null) {
-  return s ? new Date(s).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }) : "läuft";
+  return s ? new Date(s).toLocaleTimeString("sq-AL", { hour: "2-digit", minute: "2-digit" }) : "në vazhdim";
 }
 export function fmtDate(s: string) {
-  return new Date(s).toLocaleDateString("de-DE", { weekday: "short", day: "2-digit", month: "2-digit" });
+  return new Date(s).toLocaleDateString("sq-AL", { weekday: "short", day: "2-digit", month: "2-digit" });
 }
 
 export type AbsenceLike = { start_date: string; end_date: string; type: string; status?: string };

@@ -18,16 +18,16 @@ type Gps = { lat: number; lng: number } | null;
 function getPosition(): Promise<Gps> {
   return new Promise((resolve) => {
     if (!("geolocation" in navigator)) {
-      toast.info("Dieses Gerät unterstützt keinen Standort – Stempeln geht trotzdem.");
+      toast.info("Ky pajisje nuk mbështet vendndodhjen – regjistrimi funksionon gjithsesi.");
       return resolve(null);
     }
     navigator.geolocation.getCurrentPosition(
       (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
       (err) => {
         if (err.code === err.PERMISSION_DENIED) {
-          toast.warning("Standortzugriff deaktiviert. Bitte im Browser erlauben – Stempeln funktioniert auch ohne GPS.");
+          toast.warning("Qasja në vendndodhje është e çaktivizuar. Lejoje në shfletues – regjistrimi funksionon edhe pa GPS.");
         } else {
-          toast.info("Standort konnte nicht ermittelt werden – Stempeln geht trotzdem.");
+          toast.info("Vendndodhja nuk u gjet – regjistrimi funksionon gjithsesi.");
         }
         resolve(null);
       },
@@ -39,10 +39,10 @@ function getPosition(): Promise<Gps> {
 export const Route = createFileRoute("/_authenticated/zeit")({
   head: () => ({
     meta: [
-      { title: "Stempeln – ALB PROJEKT" },
-      { name: "description", content: "Ein- und ausstempeln, Baustelle wählen und Tätigkeit eintragen." },
-      { property: "og:title", content: "Stempeln – ALB PROJEKT" },
-      { property: "og:description", content: "Arbeitszeit auf der Baustelle erfassen." },
+      { title: "Regjistrimi – ALB PROJEKT" },
+      { name: "description", content: "Regjistro hyrjen/daljen, zgjidh kantierin dhe shkruaj punën e bërë." },
+      { property: "og:title", content: "Regjistrimi – ALB PROJEKT" },
+      { property: "og:description", content: "Regjistrimi i orëve të punës në kantier." },
     ],
   }),
   component: ZeitPage,
@@ -96,7 +96,7 @@ function ZeitPage() {
 
   async function clockIn() {
     if (!me) return;
-    if (!siteId) { toast.error("Bitte zuerst eine Baustelle auswählen."); return; }
+    if (!siteId) { toast.error("Zgjidh së pari një kantier."); return; }
     setBusy(true);
     const gps = await getPosition();
     const { error } = await supabase.from("time_entries").insert({
@@ -108,7 +108,7 @@ function ZeitPage() {
     });
     setBusy(false);
     if (error) { toast.error(error.message); return; }
-    toast.success("Eingestempelt – gute Arbeit!");
+    toast.success("U regjistrua hyrja – punë të mbarë!");
     refresh();
   }
 
@@ -128,7 +128,7 @@ function ZeitPage() {
       .eq("id", open.id);
     setBusy(false);
     if (error) { toast.error(error.message); return; }
-    toast.success("Ausgestempelt. Feierabend!");
+    toast.success("U regjistrua dalja. Urofshë!");
     refresh();
   }
 
@@ -136,7 +136,7 @@ function ZeitPage() {
     if (!open) return;
     const { error } = await supabase.from("time_entries").update({ site_id: siteId || null, description: desc || null }).eq("id", open.id);
     if (error) { toast.error(error.message); return; }
-    toast.success("Gespeichert");
+    toast.success("U ruajt");
     refresh();
   }
 
@@ -158,18 +158,18 @@ function ZeitPage() {
       <main className="mx-auto max-w-xl space-y-5 px-4 pt-5">
         <section className="rounded-3xl p-5 text-primary-foreground shadow-lg" style={{ background: "var(--gradient-hero)" }}>
           <div className="text-sm opacity-80">
-            {now.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" })}
+            {now.toLocaleDateString("sq-AL", { weekday: "long", day: "numeric", month: "long" })}
           </div>
           <div className="mt-1 font-display text-5xl font-extrabold">
-            {open ? fmtHours(entryHours(open, now)) : now.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })}
+            {open ? fmtHours(entryHours(open, now)) : now.toLocaleTimeString("sq-AL", { hour: "2-digit", minute: "2-digit" })}
           </div>
-          <div className="text-sm opacity-80">{open ? `Eingestempelt seit ${fmtTime(open.clock_in)}` : "Nicht eingestempelt"}</div>
+          <div className="text-sm opacity-80">{open ? `Në punë që nga ${fmtTime(open.clock_in)}` : "Nuk je në punë"}</div>
 
           <div className="mt-5 space-y-3">
             <Select value={siteId} onValueChange={setSiteId}>
               <SelectTrigger className="h-14 bg-card text-base text-card-foreground">
                 <MapPin className="h-5 w-5 text-accent" />
-                <SelectValue placeholder="Baustelle auswählen" />
+                <SelectValue placeholder="Zgjidh kantierin" />
               </SelectTrigger>
               <SelectContent>
                 {sites.map((s) => (
@@ -183,12 +183,12 @@ function ZeitPage() {
               value={desc}
               onChange={(e) => setDesc(e.target.value)}
               maxLength={500}
-              placeholder="Was wurde gemacht? (z. B. Schalung Keller, Estrich EG)"
+              placeholder="Çfarë u bë? (p.sh. kofrazh bodrumi, suvatim kati)"
               className="min-h-20 bg-card text-base text-card-foreground"
             />
             {open && (
               <button onClick={saveDetails} className="text-sm font-semibold text-accent underline">
-                Baustelle & Tätigkeit speichern
+                Ruaj kantierin & punën
               </button>
             )}
           </div>
@@ -204,26 +204,26 @@ function ZeitPage() {
             }
           >
             {open ? <Square className="h-8! w-8!" /> : <Play className="h-8! w-8!" />}
-            {open ? "Ausstempeln" : "Einstempeln"}
+            {open ? "Mbaro punën" : "Fillo punën"}
           </Button>
         </section>
 
         <section className="grid grid-cols-2 gap-3">
           <div className="rounded-2xl bg-card p-4 shadow-sm">
-            <div className="text-xs font-semibold uppercase text-muted-foreground">Diese Woche</div>
+            <div className="text-xs font-semibold uppercase text-muted-foreground">Kjo javë</div>
             <div className="font-display text-3xl font-bold">{fmtHours(weekHours)}</div>
           </div>
           <div className="rounded-2xl bg-card p-4 shadow-sm">
             <div className="text-xs font-semibold uppercase text-muted-foreground">
-              {now.toLocaleDateString("de-DE", { month: "long" })}
+              {now.toLocaleDateString("sq-AL", { month: "long" })}
             </div>
             <div className="font-display text-3xl font-bold">{fmtHours(monthHours)}</div>
           </div>
         </section>
 
         <section>
-          <h2 className="mb-2 text-xl font-bold">Diese Woche</h2>
-          {days.length === 0 && <p className="text-sm text-muted-foreground">Noch keine Einträge.</p>}
+          <h2 className="mb-2 text-xl font-bold">Kjo javë</h2>
+          {days.length === 0 && <p className="text-sm text-muted-foreground">Ende asnjë regjistrim.</p>}
           <div className="space-y-3">
             {days.map(([k, list]) => (
               <div key={k} className="rounded-2xl bg-card p-4 shadow-sm">

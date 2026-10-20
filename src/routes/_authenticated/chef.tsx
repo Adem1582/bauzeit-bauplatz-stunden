@@ -17,10 +17,10 @@ import { absenceDays, approvedAbsenceDaysInMonth, calcWage, currentYm, distanceM
 export const Route = createFileRoute("/_authenticated/chef")({
   head: () => ({
     meta: [
-      { title: "Chef-Bereich – ALB PROJEKT" },
-      { name: "description", content: "Mitarbeiter, Baustellen, Freigaben und Monatslohn verwalten." },
-      { property: "og:title", content: "Chef-Bereich – ALB PROJEKT" },
-      { property: "og:description", content: "Verwaltung der Zeiterfassung." },
+      { title: "Shefi – ALB PROJEKT" },
+      { name: "description", content: "Menaxho punëtorët, kantierët, miratimet dhe pagat mujore." },
+      { property: "og:title", content: "Shefi – ALB PROJEKT" },
+      { property: "og:description", content: "Menaxhimi i regjistrimit të orëve." },
     ],
   }),
   beforeLoad: async () => {
@@ -49,14 +49,14 @@ function ChefPage() {
     <div className="min-h-screen bg-background pb-12">
       <AppHeader />
       <main className="mx-auto max-w-5xl px-4 pt-5">
-        <h1 className="mb-4 text-3xl font-extrabold uppercase">Chef-Bereich</h1>
+        <h1 className="mb-4 text-3xl font-extrabold uppercase">Shefi</h1>
         <Tabs defaultValue="eintraege">
           <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:grid-cols-5">
-            <TabsTrigger value="eintraege" className="py-2.5">Einträge</TabsTrigger>
-            <TabsTrigger value="abwesenheiten" className="py-2.5">Abwesenheiten</TabsTrigger>
-            <TabsTrigger value="monat" className="py-2.5">Monat & Lohn</TabsTrigger>
-            <TabsTrigger value="mitarbeiter" className="py-2.5">Mitarbeiter</TabsTrigger>
-            <TabsTrigger value="baustellen" className="py-2.5">Baustellen</TabsTrigger>
+            <TabsTrigger value="eintraege" className="py-2.5">Regjistrimet</TabsTrigger>
+            <TabsTrigger value="abwesenheiten" className="py-2.5">Mungesat</TabsTrigger>
+            <TabsTrigger value="monat" className="py-2.5">Muaji & Paga</TabsTrigger>
+            <TabsTrigger value="mitarbeiter" className="py-2.5">Punëtorët</TabsTrigger>
+            <TabsTrigger value="baustellen" className="py-2.5">Kantierët</TabsTrigger>
           </TabsList>
           <TabsContent value="eintraege"><EntriesTab /></TabsContent>
           <TabsContent value="abwesenheiten"><AbsencesTab /></TabsContent>
@@ -91,7 +91,7 @@ function useMonthEntries(ym: string) {
 function MonthInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
     <div className="space-y-1">
-      <Label>Monat</Label>
+      <Label>Muaji</Label>
       <Input type="month" value={value} onChange={(e) => e.target.value && onChange(e.target.value)} className="h-11" />
     </div>
   );
@@ -125,7 +125,7 @@ function EntriesTab() {
     if (!ids.length) return;
     const { error } = await supabase.from("time_entries").update({ status: "freigegeben" }).in("id", ids);
     if (error) { toast.error(error.message); return; }
-    toast.success(`${ids.length} Einträge freigegeben`);
+    toast.success(`${ids.length} regjistrime u miratuan`);
     qc.invalidateQueries({ queryKey: ["entries"] });
   }
 
@@ -133,14 +133,14 @@ function EntriesTab() {
     <div className="mt-4 space-y-4">
       <div className="grid grid-cols-2 gap-3 rounded-2xl bg-card p-4 shadow-sm md:grid-cols-4">
         <MonthInput value={ym} onChange={setYm} />
-        <FilterSelect label="Mitarbeiter" value={emp} onChange={setEmp} options={profiles.map((p) => [p.id, p.full_name])} />
-        <FilterSelect label="Baustelle" value={site} onChange={setSite} options={sites.map((s) => [s.id, s.name])} />
-        <FilterSelect label="Status" value={status} onChange={setStatus} options={[["offen", "Offen"], ["freigegeben", "Freigegeben"], ["abgelehnt", "Abgelehnt"]]} />
+        <FilterSelect label="Punëtori" value={emp} onChange={setEmp} options={profiles.map((p) => [p.id, p.full_name])} />
+        <FilterSelect label="Kantieri" value={site} onChange={setSite} options={sites.map((s) => [s.id, s.name])} />
+        <FilterSelect label="Statusi" value={status} onChange={setStatus} options={[["offen", "Në pritje"], ["freigegeben", "E miratuar"], ["abgelehnt", "E refuzuar"]]} />
       </div>
       <div className="flex items-center justify-between">
-        <span className="text-sm text-muted-foreground">{filtered.length} Einträge</span>
+        <span className="text-sm text-muted-foreground">{filtered.length} regjistrime</span>
         <Button onClick={approveAll} variant="outline" className="h-11">
-          <Check /> Alle offenen freigeben
+          <Check /> Mirato të gjitha në pritje
         </Button>
       </div>
       <div className="space-y-2">
@@ -158,15 +158,15 @@ function EntriesTab() {
             </div>
             <div className="flex gap-2">
               <Button onClick={() => setEntryStatus(e.id, "freigegeben")} disabled={e.status === "freigegeben"} className="h-12 flex-1 bg-success text-success-foreground hover:bg-success/90 sm:flex-none">
-                <Check /> Freigeben
+                <Check /> Mirato
               </Button>
               <Button onClick={() => setEntryStatus(e.id, "abgelehnt")} disabled={e.status === "abgelehnt"} variant="destructive" className="h-12 flex-1 sm:flex-none">
-                <X /> Ablehnen
+                <X /> Refuzo
               </Button>
             </div>
           </div>
         ))}
-        {filtered.length === 0 && <p className="py-8 text-center text-muted-foreground">Keine Einträge gefunden.</p>}
+        {filtered.length === 0 && <p className="py-8 text-center text-muted-foreground">Asnjë regjistrim nuk u gjet.</p>}
       </div>
     </div>
   );
@@ -194,7 +194,7 @@ function GpsPin({ lat, lng, label, site }: { lat: number; lng: number; label: st
       {label}: {lat.toFixed(5)}, {lng.toFixed(5)}
       {dist != null && (
         <span className={onSite ? "text-success" : "text-destructive"}>
-          · {onSite ? "vor Ort" : `${fmtDistance(dist)} entfernt`}
+          · {onSite ? "në kantier" : `${fmtDistance(dist)} larg`}
         </span>
       )}
     </a>
@@ -207,8 +207,8 @@ function GpsInfo({ entry: e }: { entry: EntryWithSite }) {
   if (!hasIn && !hasOut) return null;
   return (
     <div className="flex flex-wrap gap-2">
-      {hasIn && <GpsPin lat={e.clock_in_lat!} lng={e.clock_in_lng!} label="Ein" site={e.sites} />}
-      {hasOut && <GpsPin lat={e.clock_out_lat!} lng={e.clock_out_lng!} label="Aus" site={e.sites} />}
+      {hasIn && <GpsPin lat={e.clock_in_lat!} lng={e.clock_in_lng!} label="Hyrja" site={e.sites} />}
+      {hasOut && <GpsPin lat={e.clock_out_lat!} lng={e.clock_out_lng!} label="Dalja" site={e.sites} />}
     </div>
   );
 }
@@ -220,7 +220,7 @@ function FilterSelect({ label, value, onChange, options }: { label: string; valu
       <Select value={value} onValueChange={onChange}>
         <SelectTrigger className="h-11 w-full"><SelectValue /></SelectTrigger>
         <SelectContent>
-          <SelectItem value="alle">Alle</SelectItem>
+          <SelectItem value="alle">Të gjithë</SelectItem>
           {options.map(([v = "", l = ""]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
         </SelectContent>
       </Select>
@@ -228,8 +228,8 @@ function FilterSelect({ label, value, onChange, options }: { label: string; valu
   );
 }
 
-const absenceTypeLabel: Record<string, string> = { urlaub: "Urlaub", krank: "Krankmeldung", sonstiges: "Sonstiges" };
-const fmtD = (s: string) => new Date(s + "T00:00:00").toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
+const absenceTypeLabel: Record<string, string> = { urlaub: "Pushim", krank: "Sëmundje", sonstiges: "Tjetër" };
+const fmtD = (s: string) => new Date(s + "T00:00:00").toLocaleDateString("sq-AL", { day: "2-digit", month: "2-digit", year: "numeric" });
 
 function useMonthAbsences(ym: string) {
   return useQuery({

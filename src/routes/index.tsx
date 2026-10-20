@@ -5,10 +5,10 @@ export const Route = createFileRoute("/")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "ALB PROJEKT – Zeiterfassung für die Baustelle" },
-      { name: "description", content: "Einfach ein- und ausstempeln, Baustelle wählen, Stunden und Lohn im Blick." },
+      { title: "ALB PROJEKT – Regjistrimi i orëve në kantier" },
+      { name: "description", content: "Regjistro hyrjen dhe daljen, zgjidh kantierin, shiko orët dhe pagën." },
       { property: "og:title", content: "ALB PROJEKT" },
-      { property: "og:description", content: "Zeiterfassung für kleine Baufirmen – mobil auf der Baustelle." },
+      { property: "og:description", content: "Regjistrimi i orëve për firma të vogla ndërtimi – në celular, në kantier." },
     ],
   }),
   beforeLoad: async () => {

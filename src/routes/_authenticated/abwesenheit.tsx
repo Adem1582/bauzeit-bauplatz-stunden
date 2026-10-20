@@ -17,24 +17,24 @@ import { absenceDays } from "@/lib/time";
 export const Route = createFileRoute("/_authenticated/abwesenheit")({
   head: () => ({
     meta: [
-      { title: "Abwesenheiten – ALB PROJEKT" },
-      { name: "description", content: "Urlaub und Krankmeldung einreichen und Status verfolgen." },
-      { property: "og:title", content: "Abwesenheiten – ALB PROJEKT" },
-      { property: "og:description", content: "Abwesenheiten einreichen und verwalten." },
+      { title: "Mungesat – ALB PROJEKT" },
+      { name: "description", content: "Dërgo kërkesë për pushim ose sëmundje dhe ndiq statusin." },
+      { property: "og:title", content: "Mungesat – ALB PROJEKT" },
+      { property: "og:description", content: "Dërgo dhe menaxho mungesat." },
     ],
   }),
   component: AbwesenheitPage,
 });
 
 const TYPES = [
-  { value: "urlaub", label: "Urlaub", icon: Palmtree },
-  { value: "krank", label: "Krankmeldung", icon: Stethoscope },
-  { value: "sonstiges", label: "Sonstiges", icon: HelpCircle },
+  { value: "urlaub", label: "Pushim", icon: Palmtree },
+  { value: "krank", label: "Sëmundje", icon: Stethoscope },
+  { value: "sonstiges", label: "Tjetër", icon: HelpCircle },
 ] as const;
 
-const typeLabel: Record<string, string> = { urlaub: "Urlaub", krank: "Krankmeldung", sonstiges: "Sonstiges" };
+const typeLabel: Record<string, string> = { urlaub: "Pushim", krank: "Sëmundje", sonstiges: "Tjetër" };
 
-const fmtD = (s: string) => new Date(s + "T00:00:00").toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
+const fmtD = (s: string) => new Date(s + "T00:00:00").toLocaleDateString("sq-AL", { day: "2-digit", month: "2-digit", year: "numeric" });
 
 function AbwesenheitPage() {
   const qc = useQueryClient();
@@ -61,8 +61,8 @@ function AbwesenheitPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!me) return;
-    if (!start || !end) { toast.error("Bitte Start- und Enddatum wählen."); return; }
-    if (end < start) { toast.error("Enddatum liegt vor dem Startdatum."); return; }
+    if (!start || !end) { toast.error("Zgjidh datën e fillimit dhe të mbarimit."); return; }
+    if (end < start) { toast.error("Data e mbarimit është para datës së fillimit."); return; }
     setBusy(true);
     const { error } = await supabase.from("absences").insert({
       user_id: me.id,
@@ -73,7 +73,7 @@ function AbwesenheitPage() {
     });
     setBusy(false);
     if (error) { toast.error(error.message); return; }
-    toast.success("Abwesenheit eingereicht");
+    toast.success("Kërkesa u dërgua");
     setStart(""); setEnd(""); setNote("");
     qc.invalidateQueries({ queryKey: ["my-absences"] });
   }
@@ -82,10 +82,10 @@ function AbwesenheitPage() {
     <div className="min-h-screen bg-background pb-12">
       <AppHeader />
       <main className="mx-auto max-w-xl space-y-5 px-4 pt-5">
-        <h1 className="text-3xl font-extrabold uppercase">Abwesenheiten</h1>
+        <h1 className="text-3xl font-extrabold uppercase">Mungesat</h1>
 
         <form onSubmit={submit} className="space-y-4 rounded-3xl p-5 text-primary-foreground shadow-lg" style={{ background: "var(--gradient-hero)" }}>
-          <h2 className="font-display text-xl font-bold">Neue Abwesenheit</h2>
+          <h2 className="font-display text-xl font-bold">Kërkesë e re</h2>
           <div className="grid grid-cols-3 gap-2">
             {TYPES.map((t) => (
               <button
@@ -104,11 +104,11 @@ function AbwesenheitPage() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label className="text-primary-foreground/80">Von</Label>
+              <Label className="text-primary-foreground/80">Nga</Label>
               <Input type="date" value={start} onChange={(e) => setStart(e.target.value)} required className="h-12 bg-card text-base text-card-foreground" />
             </div>
             <div className="space-y-1">
-              <Label className="text-primary-foreground/80">Bis</Label>
+              <Label className="text-primary-foreground/80">Deri</Label>
               <Input type="date" value={end} onChange={(e) => setEnd(e.target.value)} required className="h-12 bg-card text-base text-card-foreground" />
             </div>
           </div>
@@ -116,17 +116,17 @@ function AbwesenheitPage() {
             value={note}
             onChange={(e) => setNote(e.target.value)}
             maxLength={500}
-            placeholder="Bemerkung (optional)"
+            placeholder="Shënim (opsionale)"
             className="min-h-16 bg-card text-base text-card-foreground"
           />
           <Button disabled={busy} className="h-14 w-full rounded-2xl bg-accent text-lg font-extrabold uppercase text-accent-foreground hover:bg-accent/90">
-            <CalendarPlus className="h-6 w-6" /> {busy ? "Wird gesendet…" : "Einreichen"}
+            <CalendarPlus className="h-6 w-6" /> {busy ? "Duke dërguar…" : "Dërgo kërkesën"}
           </Button>
         </form>
 
         <section>
-          <h2 className="mb-2 text-xl font-bold">Meine Anträge</h2>
-          {absences.length === 0 && <p className="text-sm text-muted-foreground">Noch keine Abwesenheiten eingereicht.</p>}
+          <h2 className="mb-2 text-xl font-bold">Kërkesat e mia</h2>
+          {absences.length === 0 && <p className="text-sm text-muted-foreground">Ende asnjë kërkesë e dërguar.</p>}
           <div className="space-y-2">
             {absences.map((a) => (
               <div key={a.id} className="rounded-2xl bg-card p-4 shadow-sm">
@@ -135,7 +135,7 @@ function AbwesenheitPage() {
                   <StatusBadge status={a.status} />
                 </div>
                 <div className="text-sm">
-                  {fmtD(a.start_date)} – {fmtD(a.end_date)} · <b>{absenceDays(a)} {absenceDays(a) === 1 ? "Tag" : "Tage"}</b>
+                  {fmtD(a.start_date)} – {fmtD(a.end_date)} · <b>{absenceDays(a)} {absenceDays(a) === 1 ? "ditë" : "ditë"}</b>
                 </div>
                 {a.note && <div className="text-sm text-muted-foreground">{a.note}</div>}
               </div>
