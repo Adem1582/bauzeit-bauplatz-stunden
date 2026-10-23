@@ -318,3 +318,67 @@ function ZeitPage() {
     </div>
   );
 }
+
+/** Fotot e kantierit për regjistrimin e hapur (para/pas punës). */
+function EntryPhotos({ entryId, userId }: { entryId: string; userId: string }) {
+  const qc = useQueryClient();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+
+  const { data: photos = [] } = useQuery({
+    queryKey: ["entry-photos", entryId],
+    queryFn: async () => {
+      const { data } = await supabase.from("entry_photos").select("*").eq("entry_id", entryId).order("created_at");
+      return await Promise.all(
+        (data ?? []).map(async (p) => {
+          const { data: signed } = await supabase.storage.from("entry-photos").createSignedUrl(p.storage_path, 3600);
+          return { ...p, url: signed?.signedUrl ?? "" };
+        }),
+      );
+    },
+  });
+
+  async function upload(file: File) {
+    setBusy(true);
+    const path = `${userId}/${entryId}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+    const { error: upErr } = await supabase.storage.from("entry-photos").upload(path, file, { contentType: file.type });
+    if (upErr) { setBusy(false); toast.error(upErr.message); return; }
+    const { error } = await supabase.from("entry_photos").insert({ entry_id: entryId, user_id: userId, storage_path: path });
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Foto u ruajt");
+    qc.invalidateQueries({ queryKey: ["entry-photos", entryId] });
+  }
+
+  return (
+    <section className="rounded-2xl bg-card p-4 shadow-sm">
+      <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase text-muted-foreground">
+        <Camera className="h-4 w-4 text-accent" /> Fotot e kantierit
+      </h2>
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) void upload(f);
+          e.target.value = "";
+        }}
+      />
+      <Button variant="outline" disabled={busy} className="h-12 w-full" onClick={() => fileRef.current?.click()}>
+        <Camera /> {busy ? "Po ngarkohet…" : "Shto foto (para / pas punës)"}
+      </Button>
+      {photos.length > 0 && (
+        <div className="mt-3 grid grid-cols-3 gap-2">
+          {photos.map((p) => (
+            <a key={p.id} href={p.url} target="_blank" rel="noopener noreferrer">
+              <img src={p.url} alt="Foto e kantierit" className="aspect-square w-full rounded-xl object-cover" />
+            </a>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
