@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { MapPin, Play, Square } from "lucide-react";
+import { Camera, MapPin, Play, Square, Users, WifiOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { meQuery } from "@/lib/session";
 import { AppHeader } from "@/components/AppHeader";
@@ -10,7 +10,9 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { entryHours, fmtDate, fmtHours, fmtTime, osmLink, startOfWeek, sumHours } from "@/lib/time";
+import { distanceMeters, entryHours, fmtDate, fmtDistance, fmtHours, fmtTime, startOfWeek, sumHours } from "@/lib/time";
+import { enqueue, initOfflineSync, queueCount, syncQueue } from "@/lib/offline";
+import { useTeamToday } from "@/lib/team";
 
 type Gps = { lat: number; lng: number } | null;
 
@@ -52,10 +54,25 @@ function ZeitPage() {
   const qc = useQueryClient();
   const { data: me } = useQuery(meQuery);
   const [now, setNow] = useState(new Date());
+  const [online, setOnline] = useState(navigator.onLine);
+  const [pending, setPending] = useState(queueCount());
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 30_000);
-    return () => clearInterval(t);
-  }, []);
+    const on = () => setOnline(true);
+    const off = () => setOnline(false);
+    window.addEventListener("online", on);
+    window.addEventListener("offline", off);
+    const cleanupSync = initOfflineSync(() => {
+      setPending(queueCount());
+      qc.invalidateQueries({ queryKey: ["my-entries"] });
+    });
+    return () => {
+      clearInterval(t);
+      window.removeEventListener("online", on);
+      window.removeEventListener("offline", off);
+      cleanupSync();
+    };
+  }, [qc]);
 
   const { data: sites = [] } = useQuery({
     queryKey: ["sites", "active"],
@@ -94,11 +111,27 @@ function ZeitPage() {
 
   const refresh = () => qc.invalidateQueries({ queryKey: ["my-entries"] });
 
+  function geofenceWarn(gps: Gps) {
+    const site = sites.find((s) => s.id === siteId);
+    if (!gps || !site || site.lat == null || site.lng == null) return;
+    const d = distanceMeters(gps.lat, gps.lng, site.lat, site.lng);
+    if (d > 200) {
+      toast.warning(`Kujdes: je ${fmtDistance(d)} larg kantierit "${site.name}".`);
+    }
+  }
+
   async function clockIn() {
     if (!me) return;
     if (!siteId) { toast.error("Zgjidh së pari një kantier."); return; }
     setBusy(true);
-    const gps = await getPosition();
+    const gps = online ? await getPosition() : null;
+    if (!online) {
+      enqueue({ kind: "clock_in", user_id: me.id, site_id: siteId, description: desc || null, clock_in: new Date().toISOString(), lat: gps?.lat ?? null, lng: gps?.lng ?? null });
+      setPending(queueCount());
+      setBusy(false);
+      toast.success("Pa internet – hyrja u ruajt në telefon dhe dërgohet automatikisht kur të kthehet lidhja.");
+      return;
+    }
     const { error } = await supabase.from("time_entries").insert({
       user_id: me.id,
       site_id: siteId,
@@ -109,13 +142,21 @@ function ZeitPage() {
     setBusy(false);
     if (error) { toast.error(error.message); return; }
     toast.success("U regjistrua hyrja – punë të mbarë!");
+    geofenceWarn(gps);
     refresh();
   }
 
   async function clockOut() {
     if (!open) return;
     setBusy(true);
-    const gps = await getPosition();
+    const gps = online ? await getPosition() : null;
+    if (!online) {
+      enqueue({ kind: "clock_out", entry_id: open.id, clock_out: new Date().toISOString(), site_id: siteId || null, description: desc || null, lat: gps?.lat ?? null, lng: gps?.lng ?? null });
+      setPending(queueCount());
+      setBusy(false);
+      toast.success("Pa internet – dalja u ruajt në telefon dhe dërgohet automatikisht kur të kthehet lidhja.");
+      return;
+    }
     const { error } = await supabase
       .from("time_entries")
       .update({
@@ -129,6 +170,7 @@ function ZeitPage() {
     setBusy(false);
     if (error) { toast.error(error.message); return; }
     toast.success("U regjistrua dalja. Urofshë!");
+    geofenceWarn(gps);
     refresh();
   }
 
