@@ -259,6 +259,23 @@ function ZeitPage() {
           </Button>
         </section>
 
+        {open && me && <EntryPhotos entryId={open.id} userId={me.id} />}
+
+        {team.length > 0 && (
+          <section className="rounded-2xl bg-card p-4 shadow-sm">
+            <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase text-muted-foreground">
+              <Users className="h-4 w-4 text-accent" /> Sot në punë ({team.length})
+            </h2>
+            <div className="flex flex-wrap gap-2">
+              {team.map((t) => (
+                <span key={t.id} className="rounded-full bg-secondary px-3 py-1.5 text-sm font-medium text-secondary-foreground">
+                  {t.profiles?.full_name} · {t.sites?.name ?? "—"} · nga {fmtTime(t.clock_in)}
+                </span>
+              ))}
+            </div>
+          </section>
+        )}
+
         <section className="grid grid-cols-2 gap-3">
           <div className="rounded-2xl bg-card p-4 shadow-sm">
             <div className="text-xs font-semibold uppercase text-muted-foreground">Kjo javë</div>
