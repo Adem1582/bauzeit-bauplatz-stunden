@@ -399,11 +399,11 @@ function EmployeesTab() {
     setBusy(true);
     try {
       await createEmployee({ data: { ...f, hourly_wage: Number(f.hourly_wage.replace(",", ".")) || 0 } });
-      toast.success(`${f.full_name} angelegt. Zugangsdaten weitergeben.`);
+      toast.success(`${f.full_name} u krijua. Jepja të dhënat e hyrjes.`);
       setF({ full_name: "", email: "", password: "", hourly_wage: "" });
       qc.invalidateQueries({ queryKey: ["profiles"] });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Fehler beim Anlegen");
+      toast.error(err instanceof Error ? err.message : "Gabim gjatë krijimit");
     } finally {
       setBusy(false);
     }
@@ -414,20 +414,20 @@ function EmployeesTab() {
     if (Number.isNaN(n)) return;
     const { error } = await supabase.from("profiles").update({ hourly_wage: n }).eq("id", id);
     if (error) { toast.error(error.message); return; }
-    toast.success("Stundenlohn gespeichert");
+    toast.success("Paga për orë u ruajt");
     qc.invalidateQueries({ queryKey: ["profiles"] });
   }
 
   return (
     <div className="mt-4 grid gap-4 md:grid-cols-[1fr_1.4fr]">
       <form onSubmit={add} className="space-y-3 rounded-2xl bg-card p-4 shadow-sm">
-        <h2 className="text-xl font-bold">Mitarbeiter anlegen</h2>
-        <Field label="Name" value={f.full_name} onChange={(v) => setF({ ...f, full_name: v })} />
-        <Field label="E-Mail" type="email" value={f.email} onChange={(v) => setF({ ...f, email: v })} />
-        <Field label="Startpasswort (min. 8 Zeichen)" value={f.password} onChange={(v) => setF({ ...f, password: v })} />
-        <Field label="Stundenlohn (€)" inputMode="decimal" value={f.hourly_wage} onChange={(v) => setF({ ...f, hourly_wage: v })} />
+        <h2 className="text-xl font-bold">Shto punëtor</h2>
+        <Field label="Emri" value={f.full_name} onChange={(v) => setF({ ...f, full_name: v })} />
+        <Field label="Email" type="email" value={f.email} onChange={(v) => setF({ ...f, email: v })} />
+        <Field label="Fjalëkalimi fillestar (min. 8 shenja)" value={f.password} onChange={(v) => setF({ ...f, password: v })} />
+        <Field label="Paga për orë (€)" inputMode="decimal" value={f.hourly_wage} onChange={(v) => setF({ ...f, hourly_wage: v })} />
         <Button disabled={busy} className="h-12 w-full bg-accent text-accent-foreground hover:bg-accent/90">
-          <Plus /> {busy ? "Wird angelegt…" : "Anlegen"}
+          <Plus /> {busy ? "Po krijohet…" : "Krijo"}
         </Button>
       </form>
       <div className="space-y-2">
@@ -469,8 +469,8 @@ function SiteCoords({ site: s, onSave }: { site: { id: string; lat: number | nul
   return (
     <div className="mt-2 flex items-center gap-2">
       <MapPin className="h-4 w-4 shrink-0 text-accent" />
-      <Input value={lat} onChange={(e) => setLat(e.target.value)} inputMode="decimal" placeholder="Breitengrad" className="h-10 text-sm" />
-      <Input value={lng} onChange={(e) => setLng(e.target.value)} inputMode="decimal" placeholder="Längengrad" className="h-10 text-sm" />
+      <Input value={lat} onChange={(e) => setLat(e.target.value)} inputMode="decimal" placeholder="Gjerësia" className="h-10 text-sm" />
+      <Input value={lng} onChange={(e) => setLng(e.target.value)} inputMode="decimal" placeholder="Gjatësia" className="h-10 text-sm" />
       {dirty && (
         <Button variant="outline" className="h-10 shrink-0" onClick={() => onSave(s.id, lat, lng)}>
           <Check />
@@ -506,14 +506,14 @@ function SitesTab() {
     setAddress("");
     setLat("");
     setLng("");
-    toast.success("Baustelle angelegt");
+    toast.success("Kantieri u krijua");
     qc.invalidateQueries({ queryKey: ["sites"] });
   }
 
   async function saveCoords(id: string, latV: string, lngV: string) {
     const { error } = await supabase.from("sites").update({ lat: parseCoord(latV), lng: parseCoord(lngV) }).eq("id", id);
     if (error) { toast.error(error.message); return; }
-    toast.success("Koordinaten gespeichert");
+    toast.success("Koordinatat u ruajtën");
     qc.invalidateQueries({ queryKey: ["sites"] });
   }
 
@@ -526,24 +526,24 @@ function SitesTab() {
   return (
     <div className="mt-4 grid gap-4 md:grid-cols-[1fr_1.4fr]">
       <form onSubmit={add} className="space-y-3 rounded-2xl bg-card p-4 shadow-sm">
-        <h2 className="text-xl font-bold">Baustelle anlegen</h2>
-        <Field label="Name" value={name} onChange={setName} />
+        <h2 className="text-xl font-bold">Shto kantier</h2>
+        <Field label="Emri" value={name} onChange={setName} />
         <div className="space-y-1">
-          <Label>Adresse (optional)</Label>
+          <Label>Adresa (opsionale)</Label>
           <Input value={address} onChange={(e) => setAddress(e.target.value)} className="h-12 text-base" />
         </div>
         <div className="grid grid-cols-2 gap-2">
           <div className="space-y-1">
-            <Label>Breitengrad (optional)</Label>
+            <Label>Gjerësia (opsionale)</Label>
             <Input inputMode="decimal" placeholder="52.5200" value={lat} onChange={(e) => setLat(e.target.value)} className="h-12 text-base" />
           </div>
           <div className="space-y-1">
-            <Label>Längengrad (optional)</Label>
+            <Label>Gjatësia (opsionale)</Label>
             <Input inputMode="decimal" placeholder="13.4050" value={lng} onChange={(e) => setLng(e.target.value)} className="h-12 text-base" />
           </div>
         </div>
         <Button className="h-12 w-full bg-accent text-accent-foreground hover:bg-accent/90">
-          <Plus /> Anlegen
+          <Plus /> Krijo
         </Button>
       </form>
       <div className="space-y-2">
@@ -555,13 +555,13 @@ function SitesTab() {
                 {s.address && <div className="text-xs text-muted-foreground">{s.address}</div>}
               </div>
               <Button variant={s.active ? "outline" : "default"} className="h-11" onClick={() => toggle(s.id, !s.active)}>
-                {s.active ? "Abschließen" : "Reaktivieren"}
+                {s.active ? "Mbyll" : "Riaktivizo"}
               </Button>
             </div>
             <SiteCoords site={s} onSave={saveCoords} />
           </div>
         ))}
-        {sites.length === 0 && <p className="py-8 text-center text-muted-foreground">Noch keine Baustellen.</p>}
+        {sites.length === 0 && <p className="py-8 text-center text-muted-foreground">Ende asnjë kantier.</p>}
       </div>
     </div>
   );
