@@ -83,6 +83,7 @@ function ZeitPage() {
   const weekStart = startOfWeek(now);
   const from = weekStart < monthStart ? weekStart : monthStart;
 
+  const { data: team = [] } = useTeamToday();
   const { data: entries = [] } = useQuery({
     queryKey: ["my-entries", me?.id, from.toISOString()],
     enabled: !!me,
@@ -198,6 +199,14 @@ function ZeitPage() {
     <div className="min-h-screen bg-background pb-12">
       <AppHeader />
       <main className="mx-auto max-w-xl space-y-5 px-4 pt-5">
+        {(!online || pending > 0) && (
+          <div className="flex items-center gap-2 rounded-2xl bg-accent/15 px-4 py-3 text-sm font-semibold text-accent">
+            <WifiOff className="h-4 w-4 shrink-0" />
+            {!online
+              ? "Nuk ke internet – regjistrimet ruhen në telefon dhe dërgohen automatikisht."
+              : `${pending} regjistrime në pritje – dërgohen sapo të jetë e mundur.`}
+          </div>
+        )}
         <section className="rounded-3xl p-5 text-primary-foreground shadow-lg" style={{ background: "var(--gradient-hero)" }}>
           <div className="text-sm opacity-80">
             {now.toLocaleDateString("sq-AL", { weekday: "long", day: "numeric", month: "long" })}
