@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { MapPin, Play, Square } from "lucide-react";
+import { Camera, MapPin, Play, Square, Users, WifiOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { meQuery } from "@/lib/session";
 import { AppHeader } from "@/components/AppHeader";
@@ -10,7 +10,9 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { entryHours, fmtDate, fmtHours, fmtTime, osmLink, startOfWeek, sumHours } from "@/lib/time";
+import { distanceMeters, entryHours, fmtDate, fmtDistance, fmtHours, fmtTime, startOfWeek, sumHours } from "@/lib/time";
+import { enqueue, initOfflineSync, queueCount, syncQueue } from "@/lib/offline";
+import { useTeamToday } from "@/lib/team";
 
 type Gps = { lat: number; lng: number } | null;
 
@@ -52,10 +54,25 @@ function ZeitPage() {
   const qc = useQueryClient();
   const { data: me } = useQuery(meQuery);
   const [now, setNow] = useState(new Date());
+  const [online, setOnline] = useState(navigator.onLine);
+  const [pending, setPending] = useState(queueCount());
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 30_000);
-    return () => clearInterval(t);
-  }, []);
+    const on = () => setOnline(true);
+    const off = () => setOnline(false);
+    window.addEventListener("online", on);
+    window.addEventListener("offline", off);
+    const cleanupSync = initOfflineSync(() => {
+      setPending(queueCount());
+      qc.invalidateQueries({ queryKey: ["my-entries"] });
+    });
+    return () => {
+      clearInterval(t);
+      window.removeEventListener("online", on);
+      window.removeEventListener("offline", off);
+      cleanupSync();
+    };
+  }, [qc]);
 
   const { data: sites = [] } = useQuery({
     queryKey: ["sites", "active"],
@@ -66,6 +83,7 @@ function ZeitPage() {
   const weekStart = startOfWeek(now);
   const from = weekStart < monthStart ? weekStart : monthStart;
 
+  const { data: team = [] } = useTeamToday();
   const { data: entries = [] } = useQuery({
     queryKey: ["my-entries", me?.id, from.toISOString()],
     enabled: !!me,
@@ -94,11 +112,27 @@ function ZeitPage() {
 
   const refresh = () => qc.invalidateQueries({ queryKey: ["my-entries"] });
 
+  function geofenceWarn(gps: Gps) {
+    const site = sites.find((s) => s.id === siteId);
+    if (!gps || !site || site.lat == null || site.lng == null) return;
+    const d = distanceMeters(gps.lat, gps.lng, site.lat, site.lng);
+    if (d > 200) {
+      toast.warning(`Kujdes: je ${fmtDistance(d)} larg kantierit "${site.name}".`);
+    }
+  }
+
   async function clockIn() {
     if (!me) return;
     if (!siteId) { toast.error("Zgjidh së pari një kantier."); return; }
     setBusy(true);
-    const gps = await getPosition();
+    const gps = online ? await getPosition() : null;
+    if (!online) {
+      enqueue({ kind: "clock_in", user_id: me.id, site_id: siteId, description: desc || null, clock_in: new Date().toISOString(), lat: gps?.lat ?? null, lng: gps?.lng ?? null });
+      setPending(queueCount());
+      setBusy(false);
+      toast.success("Pa internet – hyrja u ruajt në telefon dhe dërgohet automatikisht kur të kthehet lidhja.");
+      return;
+    }
     const { error } = await supabase.from("time_entries").insert({
       user_id: me.id,
       site_id: siteId,
@@ -109,13 +143,21 @@ function ZeitPage() {
     setBusy(false);
     if (error) { toast.error(error.message); return; }
     toast.success("U regjistrua hyrja – punë të mbarë!");
+    geofenceWarn(gps);
     refresh();
   }
 
   async function clockOut() {
     if (!open) return;
     setBusy(true);
-    const gps = await getPosition();
+    const gps = online ? await getPosition() : null;
+    if (!online) {
+      enqueue({ kind: "clock_out", entry_id: open.id, clock_out: new Date().toISOString(), site_id: siteId || null, description: desc || null, lat: gps?.lat ?? null, lng: gps?.lng ?? null });
+      setPending(queueCount());
+      setBusy(false);
+      toast.success("Pa internet – dalja u ruajt në telefon dhe dërgohet automatikisht kur të kthehet lidhja.");
+      return;
+    }
     const { error } = await supabase
       .from("time_entries")
       .update({
@@ -129,6 +171,7 @@ function ZeitPage() {
     setBusy(false);
     if (error) { toast.error(error.message); return; }
     toast.success("U regjistrua dalja. Urofshë!");
+    geofenceWarn(gps);
     refresh();
   }
 
@@ -156,6 +199,14 @@ function ZeitPage() {
     <div className="min-h-screen bg-background pb-12">
       <AppHeader />
       <main className="mx-auto max-w-xl space-y-5 px-4 pt-5">
+        {(!online || pending > 0) && (
+          <div className="flex items-center gap-2 rounded-2xl bg-accent/15 px-4 py-3 text-sm font-semibold text-accent">
+            <WifiOff className="h-4 w-4 shrink-0" />
+            {!online
+              ? "Nuk ke internet – regjistrimet ruhen në telefon dhe dërgohen automatikisht."
+              : `${pending} regjistrime në pritje – dërgohen sapo të jetë e mundur.`}
+          </div>
+        )}
         <section className="rounded-3xl p-5 text-primary-foreground shadow-lg" style={{ background: "var(--gradient-hero)" }}>
           <div className="text-sm opacity-80">
             {now.toLocaleDateString("sq-AL", { weekday: "long", day: "numeric", month: "long" })}
@@ -208,6 +259,23 @@ function ZeitPage() {
           </Button>
         </section>
 
+        {open && me && <EntryPhotos entryId={open.id} userId={me.id} />}
+
+        {team.length > 0 && (
+          <section className="rounded-2xl bg-card p-4 shadow-sm">
+            <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase text-muted-foreground">
+              <Users className="h-4 w-4 text-accent" /> Sot në punë ({team.length})
+            </h2>
+            <div className="flex flex-wrap gap-2">
+              {team.map((t) => (
+                <span key={t.id} className="rounded-full bg-secondary px-3 py-1.5 text-sm font-medium text-secondary-foreground">
+                  {t.profiles?.full_name} · {t.sites?.name ?? "—"} · nga {fmtTime(t.clock_in)}
+                </span>
+              ))}
+            </div>
+          </section>
+        )}
+
         <section className="grid grid-cols-2 gap-3">
           <div className="rounded-2xl bg-card p-4 shadow-sm">
             <div className="text-xs font-semibold uppercase text-muted-foreground">Kjo javë</div>
@@ -248,5 +316,69 @@ function ZeitPage() {
         </section>
       </main>
     </div>
+  );
+}
+
+/** Fotot e kantierit për regjistrimin e hapur (para/pas punës). */
+function EntryPhotos({ entryId, userId }: { entryId: string; userId: string }) {
+  const qc = useQueryClient();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+
+  const { data: photos = [] } = useQuery({
+    queryKey: ["entry-photos", entryId],
+    queryFn: async () => {
+      const { data } = await supabase.from("entry_photos").select("*").eq("entry_id", entryId).order("created_at");
+      return await Promise.all(
+        (data ?? []).map(async (p) => {
+          const { data: signed } = await supabase.storage.from("entry-photos").createSignedUrl(p.storage_path, 3600);
+          return { ...p, url: signed?.signedUrl ?? "" };
+        }),
+      );
+    },
+  });
+
+  async function upload(file: File) {
+    setBusy(true);
+    const path = `${userId}/${entryId}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+    const { error: upErr } = await supabase.storage.from("entry-photos").upload(path, file, { contentType: file.type });
+    if (upErr) { setBusy(false); toast.error(upErr.message); return; }
+    const { error } = await supabase.from("entry_photos").insert({ entry_id: entryId, user_id: userId, storage_path: path });
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Foto u ruajt");
+    qc.invalidateQueries({ queryKey: ["entry-photos", entryId] });
+  }
+
+  return (
+    <section className="rounded-2xl bg-card p-4 shadow-sm">
+      <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase text-muted-foreground">
+        <Camera className="h-4 w-4 text-accent" /> Fotot e kantierit
+      </h2>
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) void upload(f);
+          e.target.value = "";
+        }}
+      />
+      <Button variant="outline" disabled={busy} className="h-12 w-full" onClick={() => fileRef.current?.click()}>
+        <Camera /> {busy ? "Po ngarkohet…" : "Shto foto (para / pas punës)"}
+      </Button>
+      {photos.length > 0 && (
+        <div className="mt-3 grid grid-cols-3 gap-2">
+          {photos.map((p) => (
+            <a key={p.id} href={p.url} target="_blank" rel="noopener noreferrer">
+              <img src={p.url} alt="Foto e kantierit" className="aspect-square w-full rounded-xl object-cover" />
+            </a>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }

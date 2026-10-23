@@ -277,11 +277,11 @@ function AbsencesTab() {
     <div className="mt-4 space-y-4">
       <div className="grid grid-cols-2 gap-3 rounded-2xl bg-card p-4 shadow-sm md:grid-cols-4">
         <MonthInput value={ym} onChange={setYm} />
-        <FilterSelect label="Mitarbeiter" value={emp} onChange={setEmp} options={profiles.map((p) => [p.id, p.full_name])} />
-        <FilterSelect label="Typ" value={type} onChange={setType} options={[["urlaub", "Urlaub"], ["krank", "Krankmeldung"], ["sonstiges", "Sonstiges"]]} />
-        <FilterSelect label="Status" value={status} onChange={setStatus} options={[["offen", "Offen"], ["genehmigt", "Genehmigt"], ["abgelehnt", "Abgelehnt"]]} />
+        <FilterSelect label="Punëtori" value={emp} onChange={setEmp} options={profiles.map((p) => [p.id, p.full_name])} />
+        <FilterSelect label="Lloji" value={type} onChange={setType} options={[["urlaub", "Pushim"], ["krank", "Sëmundje"], ["sonstiges", "Tjetër"]]} />
+        <FilterSelect label="Statusi" value={status} onChange={setStatus} options={[["offen", "Në pritje"], ["genehmigt", "E miratuar"], ["abgelehnt", "E refuzuar"]]} />
       </div>
-      <span className="text-sm text-muted-foreground">{filtered.length} Anträge</span>
+      <span className="text-sm text-muted-foreground">{filtered.length} kërkesa</span>
       <div className="space-y-2">
         {filtered.map((a) => (
           <div key={a.id} className="flex flex-col gap-3 rounded-2xl bg-card p-4 shadow-sm sm:flex-row sm:items-center">
@@ -290,21 +290,21 @@ function AbsencesTab() {
                 {a.profiles?.full_name} <StatusBadge status={a.status} />
               </div>
               <div className="text-sm">
-                {absenceTypeLabel[a.type]} · {fmtD(a.start_date)} – {fmtD(a.end_date)} · <b>{absenceDays(a)} {absenceDays(a) === 1 ? "Tag" : "Tage"}</b>
+                {absenceTypeLabel[a.type]} · {fmtD(a.start_date)} – {fmtD(a.end_date)} · <b>{absenceDays(a)} {absenceDays(a) === 1 ? "ditë" : "ditë"}</b>
               </div>
               {a.note && <div className="text-sm text-muted-foreground">{a.note}</div>}
             </div>
             <div className="flex gap-2">
               <Button onClick={() => setAbsenceStatus(a.id, "genehmigt")} disabled={a.status === "genehmigt"} className="h-12 flex-1 bg-success text-success-foreground hover:bg-success/90 sm:flex-none">
-                <Check /> Genehmigen
+                <Check /> Mirato
               </Button>
               <Button onClick={() => setAbsenceStatus(a.id, "abgelehnt")} disabled={a.status === "abgelehnt"} variant="destructive" className="h-12 flex-1 sm:flex-none">
-                <X /> Ablehnen
+                <X /> Refuzo
               </Button>
             </div>
           </div>
         ))}
-        {filtered.length === 0 && <p className="py-8 text-center text-muted-foreground">Keine Anträge gefunden.</p>}
+        {filtered.length === 0 && <p className="py-8 text-center text-muted-foreground">Asnjë kërkesë nuk u gjet.</p>}
       </div>
     </div>
   );
@@ -332,11 +332,11 @@ function MonthTab() {
 
   function exportCsv() {
     const csv = toCsv([
-      ["Mitarbeiter", "E-Mail", "Monat", "Stunden gesamt", "davon freigegeben", "Urlaubstage", "Kranktage", "Stundenlohn (EUR)", "Lohn (EUR)"],
+      ["Punëtori", "Email", "Muaji", "Orët gjithsej", "prej tyre të miratuara", "Ditë pushimi", "Ditë sëmundje", "Paga për orë (EUR)", "Paga (EUR)"],
       ...rows.map((r) => [r.p.full_name, r.p.email ?? "", ym, r.hours, r.approved, r.urlaub, r.krank, Number(r.p.hourly_wage), r.wage]),
-      ["Summe", "", ym, rows.reduce((s, r) => s + r.hours, 0), rows.reduce((s, r) => s + r.approved, 0), rows.reduce((s, r) => s + r.urlaub, 0), rows.reduce((s, r) => s + r.krank, 0), "", total],
+      ["Gjithsej", "", ym, rows.reduce((s, r) => s + r.hours, 0), rows.reduce((s, r) => s + r.approved, 0), rows.reduce((s, r) => s + r.urlaub, 0), rows.reduce((s, r) => s + r.krank, 0), "", total],
     ]);
-    downloadCsv(`lohn-${ym}.csv`, csv);
+    downloadCsv(`paga-${ym}.csv`, csv);
   }
 
   return (
@@ -344,22 +344,22 @@ function MonthTab() {
       <div className="flex flex-wrap items-end gap-3 rounded-2xl bg-card p-4 shadow-sm">
         <MonthInput value={ym} onChange={setYm} />
         <Button onClick={exportCsv} className="h-11 bg-accent text-accent-foreground hover:bg-accent/90">
-          <Download /> CSV exportieren
+          <Download /> Shkarko CSV
         </Button>
       </div>
-      <p className="text-xs text-muted-foreground">Lohn = Gesamtstunden (ohne abgelehnte Einträge) × Stundenlohn.</p>
+      <p className="text-xs text-muted-foreground">Paga = Orët gjithsej (pa regjistrimet e refuzuara) × Paga për orë.</p>
       <div className="overflow-x-auto rounded-2xl bg-card shadow-sm">
         <table className="w-full text-sm">
           <thead className="bg-primary text-left text-primary-foreground">
             <tr>
-              <th className="p-3">Mitarbeiter</th>
-              <th className="p-3 text-right">Stunden</th>
-              <th className="p-3 text-right">Freigegeben</th>
-              <th className="p-3 text-right">Offen</th>
-              <th className="p-3 text-right">Urlaub</th>
-              <th className="p-3 text-right">Krank</th>
+              <th className="p-3">Punëtori</th>
+              <th className="p-3 text-right">Orët</th>
+              <th className="p-3 text-right">Të miratuara</th>
+              <th className="p-3 text-right">Në pritje</th>
+              <th className="p-3 text-right">Pushim</th>
+              <th className="p-3 text-right">Sëmundje</th>
               <th className="p-3 text-right">€/h</th>
-              <th className="p-3 text-right">Lohn</th>
+              <th className="p-3 text-right">Paga</th>
             </tr>
           </thead>
           <tbody>
@@ -378,7 +378,7 @@ function MonthTab() {
           </tbody>
           <tfoot>
             <tr className="border-t-2 font-bold">
-              <td className="p-3" colSpan={7}>Summe</td>
+              <td className="p-3" colSpan={7}>Gjithsej</td>
               <td className="p-3 text-right text-accent-foreground"><span className="rounded bg-accent px-2 py-1">{eur(total)}</span></td>
             </tr>
           </tfoot>
@@ -399,11 +399,11 @@ function EmployeesTab() {
     setBusy(true);
     try {
       await createEmployee({ data: { ...f, hourly_wage: Number(f.hourly_wage.replace(",", ".")) || 0 } });
-      toast.success(`${f.full_name} angelegt. Zugangsdaten weitergeben.`);
+      toast.success(`${f.full_name} u krijua. Jepja të dhënat e hyrjes.`);
       setF({ full_name: "", email: "", password: "", hourly_wage: "" });
       qc.invalidateQueries({ queryKey: ["profiles"] });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Fehler beim Anlegen");
+      toast.error(err instanceof Error ? err.message : "Gabim gjatë krijimit");
     } finally {
       setBusy(false);
     }
@@ -414,20 +414,20 @@ function EmployeesTab() {
     if (Number.isNaN(n)) return;
     const { error } = await supabase.from("profiles").update({ hourly_wage: n }).eq("id", id);
     if (error) { toast.error(error.message); return; }
-    toast.success("Stundenlohn gespeichert");
+    toast.success("Paga për orë u ruajt");
     qc.invalidateQueries({ queryKey: ["profiles"] });
   }
 
   return (
     <div className="mt-4 grid gap-4 md:grid-cols-[1fr_1.4fr]">
       <form onSubmit={add} className="space-y-3 rounded-2xl bg-card p-4 shadow-sm">
-        <h2 className="text-xl font-bold">Mitarbeiter anlegen</h2>
-        <Field label="Name" value={f.full_name} onChange={(v) => setF({ ...f, full_name: v })} />
-        <Field label="E-Mail" type="email" value={f.email} onChange={(v) => setF({ ...f, email: v })} />
-        <Field label="Startpasswort (min. 8 Zeichen)" value={f.password} onChange={(v) => setF({ ...f, password: v })} />
-        <Field label="Stundenlohn (€)" inputMode="decimal" value={f.hourly_wage} onChange={(v) => setF({ ...f, hourly_wage: v })} />
+        <h2 className="text-xl font-bold">Shto punëtor</h2>
+        <Field label="Emri" value={f.full_name} onChange={(v) => setF({ ...f, full_name: v })} />
+        <Field label="Email" type="email" value={f.email} onChange={(v) => setF({ ...f, email: v })} />
+        <Field label="Fjalëkalimi fillestar (min. 8 shenja)" value={f.password} onChange={(v) => setF({ ...f, password: v })} />
+        <Field label="Paga për orë (€)" inputMode="decimal" value={f.hourly_wage} onChange={(v) => setF({ ...f, hourly_wage: v })} />
         <Button disabled={busy} className="h-12 w-full bg-accent text-accent-foreground hover:bg-accent/90">
-          <Plus /> {busy ? "Wird angelegt…" : "Anlegen"}
+          <Plus /> {busy ? "Po krijohet…" : "Krijo"}
         </Button>
       </form>
       <div className="space-y-2">
@@ -469,8 +469,8 @@ function SiteCoords({ site: s, onSave }: { site: { id: string; lat: number | nul
   return (
     <div className="mt-2 flex items-center gap-2">
       <MapPin className="h-4 w-4 shrink-0 text-accent" />
-      <Input value={lat} onChange={(e) => setLat(e.target.value)} inputMode="decimal" placeholder="Breitengrad" className="h-10 text-sm" />
-      <Input value={lng} onChange={(e) => setLng(e.target.value)} inputMode="decimal" placeholder="Längengrad" className="h-10 text-sm" />
+      <Input value={lat} onChange={(e) => setLat(e.target.value)} inputMode="decimal" placeholder="Gjerësia" className="h-10 text-sm" />
+      <Input value={lng} onChange={(e) => setLng(e.target.value)} inputMode="decimal" placeholder="Gjatësia" className="h-10 text-sm" />
       {dirty && (
         <Button variant="outline" className="h-10 shrink-0" onClick={() => onSave(s.id, lat, lng)}>
           <Check />
@@ -506,14 +506,14 @@ function SitesTab() {
     setAddress("");
     setLat("");
     setLng("");
-    toast.success("Baustelle angelegt");
+    toast.success("Kantieri u krijua");
     qc.invalidateQueries({ queryKey: ["sites"] });
   }
 
   async function saveCoords(id: string, latV: string, lngV: string) {
     const { error } = await supabase.from("sites").update({ lat: parseCoord(latV), lng: parseCoord(lngV) }).eq("id", id);
     if (error) { toast.error(error.message); return; }
-    toast.success("Koordinaten gespeichert");
+    toast.success("Koordinatat u ruajtën");
     qc.invalidateQueries({ queryKey: ["sites"] });
   }
 
@@ -526,24 +526,24 @@ function SitesTab() {
   return (
     <div className="mt-4 grid gap-4 md:grid-cols-[1fr_1.4fr]">
       <form onSubmit={add} className="space-y-3 rounded-2xl bg-card p-4 shadow-sm">
-        <h2 className="text-xl font-bold">Baustelle anlegen</h2>
-        <Field label="Name" value={name} onChange={setName} />
+        <h2 className="text-xl font-bold">Shto kantier</h2>
+        <Field label="Emri" value={name} onChange={setName} />
         <div className="space-y-1">
-          <Label>Adresse (optional)</Label>
+          <Label>Adresa (opsionale)</Label>
           <Input value={address} onChange={(e) => setAddress(e.target.value)} className="h-12 text-base" />
         </div>
         <div className="grid grid-cols-2 gap-2">
           <div className="space-y-1">
-            <Label>Breitengrad (optional)</Label>
+            <Label>Gjerësia (opsionale)</Label>
             <Input inputMode="decimal" placeholder="52.5200" value={lat} onChange={(e) => setLat(e.target.value)} className="h-12 text-base" />
           </div>
           <div className="space-y-1">
-            <Label>Längengrad (optional)</Label>
+            <Label>Gjatësia (opsionale)</Label>
             <Input inputMode="decimal" placeholder="13.4050" value={lng} onChange={(e) => setLng(e.target.value)} className="h-12 text-base" />
           </div>
         </div>
         <Button className="h-12 w-full bg-accent text-accent-foreground hover:bg-accent/90">
-          <Plus /> Anlegen
+          <Plus /> Krijo
         </Button>
       </form>
       <div className="space-y-2">
@@ -555,13 +555,13 @@ function SitesTab() {
                 {s.address && <div className="text-xs text-muted-foreground">{s.address}</div>}
               </div>
               <Button variant={s.active ? "outline" : "default"} className="h-11" onClick={() => toggle(s.id, !s.active)}>
-                {s.active ? "Abschließen" : "Reaktivieren"}
+                {s.active ? "Mbyll" : "Riaktivizo"}
               </Button>
             </div>
             <SiteCoords site={s} onSave={saveCoords} />
           </div>
         ))}
-        {sites.length === 0 && <p className="py-8 text-center text-muted-foreground">Noch keine Baustellen.</p>}
+        {sites.length === 0 && <p className="py-8 text-center text-muted-foreground">Ende asnjë kantier.</p>}
       </div>
     </div>
   );

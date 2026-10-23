@@ -55,6 +55,48 @@ export type Database = {
           },
         ]
       }
+      entry_photos: {
+        Row: {
+          caption: string | null
+          created_at: string
+          entry_id: string
+          id: string
+          storage_path: string
+          user_id: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          entry_id: string
+          id?: string
+          storage_path: string
+          user_id: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          entry_id?: string
+          id?: string
+          storage_path?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entry_photos_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "time_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entry_photos_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           active: boolean
